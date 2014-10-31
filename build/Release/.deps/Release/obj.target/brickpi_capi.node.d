@@ -1,0 +1,1 @@
+cmd_Release/obj.target/brickpi_capi.node := flock ./Release/linker.lock g++ -shared -pthread -rdynamic  -Wl,-soname=brickpi_capi.node -o Release/obj.target/brickpi_capi.node -Wl,--start-group Release/obj.target/brickpi_capi/c_brickpi.o Release/obj.target/brickpi_capi/brickpi.o -Wl,--end-group -lwiringPi -lrt -lm -L/usr/local/lib
