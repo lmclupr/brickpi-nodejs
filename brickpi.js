@@ -1,4 +1,4 @@
-var brickpi_capi = require('./build/Release/brickpi-capi');
+var brickpi_capi = require('./build/Release/brickpi_capi');
 var events = require('events');
 var event = new events.EventEmitter();
 

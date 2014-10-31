@@ -8,8 +8,8 @@ var motorC = brickpi.CreateMotor({port: 2, name: 'motorC'});
 robot.Setup().AddMotor(motorA).AddMotor(motorB).AddMotor(motorC).Run(function() {});
 
 motorA.Start(-200).StopIn(14000, function() {
-    motorB.Start(+200).StopIn(14000, function() {
-	motorC.Start(+200).StopIn(13000, function() {
+    motorB.Start(-200).StopIn(14000, function() {
+	motorC.Start(-200).StopIn(13000, function() {
 	    console.log('Finished sequence');
 	});
     });

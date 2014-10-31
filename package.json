@@ -1,0 +1,27 @@
+{
+  "name": "brickpi-raspberry",
+  "version": "0.0.2",
+  "description": "BrickPi Nodejs API",
+  "main": "brickpi.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "node-gyp rebuild"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lmclupr/brickpi-nodejs.git"
+  },
+  "keywords": [
+    "BrickPi",
+    "RaspBerry",
+    "Dexter",
+    "Lego"
+  ],
+  "author": "Luc Prieur <luc.prieur.ing@gmail.com>",
+  "license": "ISC",
+  "gypfile": true,
+  "bugs": {
+    "url": "https://github.com/lmclupr/brickpi-nodejs/issues"
+  },
+  "homepage": "https://github.com/lmclupr/brickpi-nodejs"
+}
