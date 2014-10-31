@@ -146,4 +146,4 @@ void init(Handle<Object> exports) {
                FunctionTemplate::New(NGetMotorEnable)->GetFunction());
 }
 
-NODE_MODULE(brickpi, init)
+NODE_MODULE(brickpi_capi, init)
