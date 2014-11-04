@@ -1,6 +1,6 @@
 {
   "name": "brickpi-raspberry",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "BrickPi Nodejs API",
   "main": "brickpi.js",
   "scripts": {
@@ -17,6 +17,9 @@
     "Dexter",
     "Lego"
   ],
+  "dependencies": {
+    "events": "latest"
+  },
   "author": "Luc Prieur <luc.prieur.ing@gmail.com>",
   "license": "ISC",
   "gypfile": true,

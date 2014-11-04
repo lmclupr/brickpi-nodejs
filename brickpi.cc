@@ -114,6 +114,38 @@ Handle<Value> NGetEncoder(const Arguments& args) {
   return scope.Close(num);
 }
 
+Handle<Value> NSetSensorType(const Arguments& args) {
+  HandleScope scope;
+
+  if (args.Length() != 2) {
+    ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+    return scope.Close(Undefined());
+  }
+
+  if (!args[0]->IsNumber() || !args[1]->IsNumber()) {
+    ThrowException(Exception::TypeError(String::New("Wrong arguments")));
+    return scope.Close(Undefined());
+  }
+
+  c_setSensorType(args[0]->NumberValue(),args[1]->NumberValue());
+}
+
+Handle<Value> NGetSensor(const Arguments& args) {
+  HandleScope scope;
+  if (args.Length() != 1) {
+    ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+    return scope.Close(Undefined());
+  }
+
+  if (!args[0]->IsNumber()) {
+    ThrowException(Exception::TypeError(String::New("Wrong arguments")));
+    return scope.Close(Undefined());
+  }
+
+  Local<Number> num = Number::New(c_getSensor(args[0]->NumberValue()));
+  return scope.Close(num);
+}
+
 
 
 void init(Handle<Object> exports) {
@@ -141,9 +173,14 @@ void init(Handle<Object> exports) {
   exports->Set(String::NewSymbol("GetEncoder"),
                FunctionTemplate::New(NGetEncoder)->GetFunction());
 
-
   exports->Set(String::NewSymbol("GetMotorEnable"),
                FunctionTemplate::New(NGetMotorEnable)->GetFunction());
+
+  exports->Set(String::NewSymbol("SetSensorType"),
+               FunctionTemplate::New(NSetSensorType)->GetFunction());
+
+  exports->Set(String::NewSymbol("GetSensor"),
+               FunctionTemplate::New(NGetSensor)->GetFunction());
 }
 
 NODE_MODULE(brickpi_capi, init)

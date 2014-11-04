@@ -38,3 +38,11 @@ long c_getEncoder(int port) {
 int c_getMotorEnable(int port) {
   return BrickPi.MotorEnable[port];
 }
+
+void c_setSensorType(int port, unsigned char sensor_type) {
+  BrickPi.SensorType[port] = sensor_type;
+}
+
+long c_getSensor(int port) {
+  return BrickPi.Sensor[port];
+}
