@@ -1,4 +1,4 @@
-brickpi-nodejs
+brickpi-raspberry
 ==============
 
 BrickPi Nodejs API module
@@ -22,10 +22,10 @@ $ npm install brickpi-raspberry
 
 
 
-### Running Motors
+### Running Motors and Sensors
 
 ```javascript
-var brickpi = require('brickpi');
+var brickpi = require('brickpi-raspberry');
 
 var robot = brickpi.CreateRobot();
 var motorA = brickpi.CreateMotor({port: brickpi.MOTOR.A, name: 'Upper arm'});
@@ -59,7 +59,7 @@ Use the CreateRobot() object contructor.
 
 To initialize the robot object, use the Setup() method.
 
-#### Addeing Sensors and Motors
+#### Adding Sensors and Motors
 
 Use the AddMotor() and AddSensor() methods to add motors and sensors.
 
@@ -125,3 +125,8 @@ GetState() returns an object that contains the state of the sensor, including na
 
 'stuck' when a motor stopped moving because of some external obstruction.  i.e. the motor's speed is non-null, yet, it isn't turning/
  
+
+## Limitations
+
+This is my first go at this module.  I have only implemented the LEGO NXT Touch, Color and Ultrasonic sensors for now.
+Stay posted, I'll be adding some more soon.

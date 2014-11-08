@@ -1,6 +1,6 @@
 {
   "name": "brickpi-raspberry",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "BrickPi Nodejs API",
   "main": "brickpi.js",
   "scripts": {

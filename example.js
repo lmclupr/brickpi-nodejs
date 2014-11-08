@@ -25,10 +25,6 @@ motorA.Start(-100).StopIn(14000, function() {
     });
 });
 
-// motorA - raises +lowers
-//motorB.Start(-100).StopIn(14000); // - raises +lowers
-//motorC.Start(-200).StopIn(14000); // -opens + closes
-
 brickpi.event.on('change', function(sensor) {
     console.log(sensor.name + ' changed to ' + sensor.value);
 });
@@ -36,7 +32,7 @@ brickpi.event.on('change', function(sensor) {
 brickpi.event.on('touched', function(sensor) {
     console.log('touched issued');
     if (sensor.value === 1) {
-	if (!motorB.paused) {
+	if (!motorB.GetState().paused) {
 	    motorB.Pause();
 	} else {
 	    motorB.Resume();

@@ -14,36 +14,44 @@ console.log(constants.SENSOR_PORT.ONE);
 function CreateRobot() {
     var robot = {
         motors: [],
-        encoders: [],
+        encoders: [0,0,0,0],
+	retries: [0,0,0,0],
+
         sensors: [],
-	values: [],
+	values: [null, null, null, null, null],
+
 	intervalId: null,
         Run: function(callback) {
             var t = this;
 	    brickpi_capi.BrickPiSetupSensors();
             this.intervalId = setInterval(function() {
                 brickpi_capi.BrickPiUpdateValues();
-                callback();
+                if (callback) callback();
 
                 for (var i=0; i<t.motors.length; i++) {
-                    if (t.encoders[i] != brickpi_capi.GetEncoder(t.motors[i].port)) {
-                        t.encoders[i] = brickpi_capi.GetEncoder(t.motors[i].port);
-                        t.motors[i].Moved(t.encoders[i]);
-                        event.emit('move', t.motors[i]);
+		    var currentEncoderValue = brickpi_capi.GetEncoder(t.motors[i].port);
+	//	    console.log(t.motors[i].name +":"+ t.encoders[i] + ":" + currentEncoderValue);
+
+                    if (t.encoders[i] !== currentEncoderValue) {
+                        t.encoders[i] = currentEncoderValue;
+			t.motors[i].Moved(currentEncoderValue);
                     } else if (t.motors[i].speed !== 0) {
 			// the motor speed is non null, yet, the motor isn't moving
-			// i.e. it is stuck.  issue event.
-			console.log('motor is stucked');
-			event.emit('stuck', t.motors[i]);
+//			console.log(t.retries);
+			if (t.retries[i] < 4) {
+			    t.retries[i]++;
+			} else {
+			    t.retries[i] = 0;
+			    t.motors[i].Stuck(t.encoders[i]);
+			}
 		    }
+		}
 
-                }
 
 		for (var i=0; i<t.sensors.length; i++) {
                     if (t.values[i] != brickpi_capi.GetSensor(t.sensors[i].port)) {
                         t.values[i] = brickpi_capi.GetSensor(t.sensors[i].port);
                         t.sensors[i].Changed(t.values[i]);
-                        event.emit('change', t.sensors[i]);
                     }
                 }
             }, 10);
@@ -131,15 +139,22 @@ function CreateMotor(params) {
 	},
         Moved: function(encoderValue) {
             this.position = encoderValue;
+	    event.emit('move', this);
             if (!this.endEncoderValue) return;
             if ((this.speed > 0) && (encoderValue >= this.endEncoderValue)) {
 		this.Stop();
-		this.callback();
+		if (this.callback) this.callback();
             } else if ((this.speed < 0) && (encoderValue <= this.endEncoderValue)) {
                 this.Stop();
-                this.callback();
+                if (this.callback) this.callback();
             }
         },
+	Stuck: function(encoderValue) {
+	    this.position = encoderValue;
+	    event.emit('stuck', this);
+	    this.Stop();
+            if (this.callback) this.callback();
+	}
     };
     return motor;
 }
@@ -164,6 +179,7 @@ function CreateSensor(params) {
 //	    console.log('changed called with value: ' + value);
 	    if (value !== this.value) {
 		this.value = value;
+		event.emit('change', this);
 		if (this.type === constants.SENSOR_TYPE.TOUCH) {
 		    event.emit('touch', this);
 		}
