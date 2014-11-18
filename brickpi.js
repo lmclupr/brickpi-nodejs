@@ -9,9 +9,7 @@ exports.MOTOR = constants.MOTOR;
 exports.SENSOR_PORT = constants.SENSOR_PORT;
 exports.SENSOR_TYPE = constants.SENSOR_TYPE;
 
-console.log(constants.SENSOR_PORT.ONE);
-
-function CreateRobot() {
+function createRobot() {
     var robot = {
         motors: [],
         encoders: [0,0,0,0],
@@ -21,72 +19,70 @@ function CreateRobot() {
 	values: [null, null, null, null, null],
 
 	intervalId: null,
-        Run: function(callback) {
+        run: function(callback) {
             var t = this;
-	    brickpi_capi.BrickPiSetupSensors();
+	    brickpi_capi.brickPiSetupSensors();
             this.intervalId = setInterval(function() {
-                brickpi_capi.BrickPiUpdateValues();
+                brickpi_capi.brickPiUpdateValues();
                 if (callback) callback();
 
                 for (var i=0; i<t.motors.length; i++) {
-		    var currentEncoderValue = brickpi_capi.GetEncoder(t.motors[i].port);
-	//	    console.log(t.motors[i].name +":"+ t.encoders[i] + ":" + currentEncoderValue);
+		    var currentEncoderValue = brickpi_capi.getEncoder(t.motors[i].port);
 
                     if (t.encoders[i] !== currentEncoderValue) {
                         t.encoders[i] = currentEncoderValue;
-			t.motors[i].Moved(currentEncoderValue);
+			t.motors[i]._moved(currentEncoderValue);
                     } else if (t.motors[i].speed !== 0) {
-			// the motor speed is non null, yet, the motor isn't moving
-//			console.log(t.retries);
 			if (t.retries[i] < 4) {
 			    t.retries[i]++;
 			} else {
 			    t.retries[i] = 0;
-			    t.motors[i].Stuck(t.encoders[i]);
+			    t.motors[i]._stuck(t.encoders[i]);
 			}
 		    }
+
 		}
 
 
 		for (var i=0; i<t.sensors.length; i++) {
-                    if (t.values[i] != brickpi_capi.GetSensor(t.sensors[i].port)) {
-                        t.values[i] = brickpi_capi.GetSensor(t.sensors[i].port);
-                        t.sensors[i].Changed(t.values[i]);
+                    if (t.values[i] != brickpi_capi.getSensor(t.sensors[i].port)) {
+                        t.values[i] = brickpi_capi.getSensor(t.sensors[i].port);
+                        t.sensors[i]._changed(t.values[i]);
                     }
                 }
             }, 10);
 
             return this;
 	},
-        Setup: function() {
-            brickpi_capi.ClearTick();
-            brickpi_capi.BrickPiSetup();
-            brickpi_capi.SetAddress(0, 1);
-            brickpi_capi.SetAddress(1, 2);
+        setup: function() {
+            brickpi_capi.clearTick();
+            brickpi_capi.brickPiSetup();
+            brickpi_capi.setAddress(0, 1);
+            brickpi_capi.setAddress(1, 2);
             return this;
         },
-        AddMotor: function(motor) {
-            brickpi_capi.SetMotorEnable(motor.port);
+        addMotor: function(motor) {
+            brickpi_capi.setMotorEnable(motor.port);
             this.motors.push(motor);
-            brickpi_capi.BrickPiUpdateValues();
+            brickpi_capi.brickPiUpdateValues();
             return this;
         },
-        AddSensor: function(sensor) {
-	    brickpi_capi.SetSensorType(sensor.port, sensor.type);
+        addSensor: function(sensor) {
+	    brickpi_capi.setSensorType(sensor.port, sensor.type);
             this.sensors.push(sensor);
-	    brickpi_capi.BrickPiUpdateValues();
+	    brickpi_capi.brickPiUpdateValues();
             return this;
         },
-	Stop: function() {
+	stop: function() {
 	    if (this.intervalId) clearInterval(this.intervalId);
 	}
     }
     return robot;
 }
-exports.CreateRobot = CreateRobot;
+exports.createRobot = createRobot;
 
 
-function CreateMotor(params) {
+function createMotor(params) {
     var motor = {
         port: params.port,
         name: params.name,
@@ -95,87 +91,127 @@ function CreateMotor(params) {
         callback: null,
 	pausedSpeed: 0,
 	paused: false,
-	GetState: function() {
-	    return {
-		name: this.name,
-		port: this.port,
-		position: this.position,
-		paused: this.paused,
-		speed: this.speed,
-	    };
+	endPoints: [null, null],
+        getPosition: function() {
+            return this.position;
+        },
+        getName: function() {
+            return this.name;
+        },
+        getCurrentSpeed: function() {
+            return this.speed;
+        },
+        isPaused: function() {
+            return this.paused;
+        },
+        getPort: function() {
+            return this.port;
+        },
+	setEndPoints: function(a, b) {
+	    var currentPosition = brickpi_capi.getEncoder(this.port);
+	    console.log(currentPosition);
+	    if (b > 0) console.log("lower end point must be negative");
+	    if (a < 0) console.log("higher end point must be position");
+	    this.endPoints = [a + currentPosition, b + currentPosition];
+	    return this;
 	},
-        Start: function(speed) {
+        start: function(speed, callback) {
             this.speed = speed;
-            brickpi_capi.SetMotorSpeed(this.port, speed);
+            brickpi_capi.setMotorSpeed(this.port, speed);
+	    if (callback) {
+		this.callback = callback;
+	    }
             return this;
         },
-        Stop: function() {
-            brickpi_capi.SetMotorSpeed(this.port, 0);
+        stop: function(err) {
+            brickpi_capi.setMotorSpeed(this.port, 0);
             this.endEncoderValue = null;
             this.speed = 0;
+	    if (this.callback) this.callback(err);
             event.emit('stop', this);
             return this;
         },
         endEncoderValue: null,
-        StopIn: function(amount, callback) {
+        stopIn: function(amount, callback) {
             this.callback = callback;
-            var startEncoderValue = brickpi_capi.GetEncoder(this.port);
+            var startEncoderValue = brickpi_capi.getEncoder(this.port);
             this.endEncoderValue = startEncoderValue + this.speed*amount/(Math.abs(this.speed));
             return this;
         },
-	Pause: function() {
-	    console.log('speed:' + this.speed);
-	    this.pausedSpeed = this.speed;
-	    brickpi_capi.SetMotorSpeed(this.port, 0);
-	    this.paused = true;
+	pause: function() {
+	    if (!this.paused && (this.speed !== 0) && (this.endEncoderValue !== null)) {
+		console.log('speed:' + this.speed);
+		this.pausedSpeed = this.speed;
+		this.speed = 0;
+		brickpi_capi.setMotorSpeed(this.port, 0);
+		this.paused = true;
+	    }
 	    return this;
 	},
-	Resume: function() {
-	    console.log('pausedSpeed:' + this.pausedSpeed);
-	    this.speed = this.pausedSpeed;
-	    this.paused = false;
-	    brickpi_capi.SetMotorSpeed(this.port, this.speed);
+	resume: function() {
+	    if (this.paused) {
+		console.log('pausedSpeed:' + this.pausedSpeed);
+		this.speed = this.pausedSpeed;
+		this.paused = false;
+		brickpi_capi.setMotorSpeed(this.port, this.speed);
+	    }
 	    return this;
 	},
-        Moved: function(encoderValue) {
+        _moved: function(encoderValue) {
             this.position = encoderValue;
 	    event.emit('move', this);
-            if (!this.endEncoderValue) return;
-            if ((this.speed > 0) && (encoderValue >= this.endEncoderValue)) {
-		this.Stop();
-		if (this.callback) this.callback();
-            } else if ((this.speed < 0) && (encoderValue <= this.endEncoderValue)) {
-                this.Stop();
-                if (this.callback) this.callback();
+
+            if (this.endEncoderValue) {
+		if ((this.speed > 0) && (encoderValue >= this.endEncoderValue)) {
+		    this.stop();
+		} else if ((this.speed < 0) && (encoderValue <= this.endEncoderValue)) {
+                    this.stop();
+		}
+	    }
+
+	    console.log(this.endPoints[0] + ":"+ encoderValue);
+
+	    // checking endpoints
+	    if ((this.endPoints[0]) &&  (encoderValue > this.endPoints[0])) {
+		console.log('end point reached');
+                this.stop('end point reached');
             }
+
+            if ((this.endPoints[1]) &&  (encoderValue < this.endPoints[1])) {
+		console.log('endpoint reached');
+                this.stop('end point reached');
+	    }
         },
-	Stuck: function(encoderValue) {
+	_stuck: function(encoderValue) {
 	    this.position = encoderValue;
 	    event.emit('stuck', this);
-	    this.Stop();
-            if (this.callback) this.callback();
+	    this.stop('stuck');
 	}
     };
     return motor;
 }
-exports.CreateMotor = CreateMotor;
+exports.createMotor = createMotor;
 
 
-function CreateSensor(params) {
+function createSensor(params) {
     var sensor = {
 	name: params.name,
 	port: params.port,
 	type: params.type,
 	value: null,
-	GetState: function() {
-	    return {
-		name: this.name,
-		port: this.port,
-		type: this.type,
-		value: this.value,
-	    };
+	getValue: function() {
+	    return this.value;
 	},
-	Changed: function(value) {
+        getName: function() {
+            return this.name;
+        },
+        getType: function() {
+            return this.type;
+        },
+	getPort: function() {
+            return this.port;
+        },
+	_changed: function(value) {
 //	    console.log('changed called with value: ' + value);
 	    if (value !== this.value) {
 		this.value = value;
@@ -188,4 +224,4 @@ function CreateSensor(params) {
     };
     return sensor;
 }
-exports.CreateSensor = CreateSensor;
+exports.createSensor = createSensor;

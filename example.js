@@ -1,49 +1,44 @@
 var brickpi = require('brickpi-raspberry');
 
-var robot = brickpi.CreateRobot();
-var motorA = brickpi.CreateMotor({port: brickpi.MOTOR.A, name: 'motorA'});
-var motorB = brickpi.CreateMotor({port: brickpi.MOTOR.B, name: 'motorB'});
-var motorC = brickpi.CreateMotor({port: brickpi.MOTOR.C, name: 'motorC'});
-var motorD = brickpi.CreateMotor({port: brickpi.MOTOR.D, name: 'Turret motor'});
+var robot = brickpi.createRobot();
+var motorA = brickpi.createMotor({port: brickpi.MOTOR.A, name: 'motorA'});
+var motorB = brickpi.createMotor({port: brickpi.MOTOR.B, name: 'motorB'});
+var motorC = brickpi.createMotor({port: brickpi.MOTOR.C, name: 'motorC'});
+var motorD = brickpi.createMotor({port: brickpi.MOTOR.D, name: 'Turret motor'});
 
 
-var touchA = brickpi.CreateSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, name: 'Touch Sensor on upper arm'});
+var touchA = brickpi.createSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, name: 'Touch Sensor on upper arm'});
 
-//var distanceB = brickpi.CreateSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.ULTRASONIC_CONT, name: 'Distance to ground'});
+robot.setup().addMotor(motorA).addMotor(motorB).addMotor(motorC).addSensor(touchA).addMotor(motorD).run(function() {});
 
-
-robot.Setup().AddMotor(motorA).AddMotor(motorB).AddMotor(motorC).AddSensor(touchA).AddMotor(motorD).Run(function() {});
-
-motorA.Start(-100).StopIn(14000, function() {
-    motorB.Start(-100).StopIn(14000, function() {
-	motorC.Start(200).StopIn(13000, function() {
-	    motorD.Start(100).StopIn(140, function() {
+motorA.start(-100).stopIn(14000, function() {
+    motorB.start(-100).stopIn(14000, function() {
+	motorC.start(200).stopIn(13000, function() {
+	    motorD.start(100).stopIn(140, function() {
 		console.log('Finished sequence');
-		robot.Stop(); // this kills communication to brickpi.
+		robot.stop(); // this kills communication to brickpi.
 	    });
 	});
     });
 });
 
 brickpi.event.on('change', function(sensor) {
-    console.log(sensor.name + ' changed to ' + sensor.value);
+    console.log(sensor.getName() + ' changed to ' + sensor.GetValue());
 });
 
-brickpi.event.on('touched', function(sensor) {
+brickpi.event.on('touch', function(sensor) {
     console.log('touched issued');
-    if (sensor.value === 1) {
-	if (!motorB.GetState().paused) {
-	    motorB.Pause();
+    if (sensor.getValue() === 1) {
+	if (!motorB.isPaused()) {
+	    motorB.pause();
 	} else {
-	    motorB.Resume();
+	    motorB.resume();
 	}
     }
 });
 
 brickpi.event.on('move', function(motor) {
-//    console.log(motor.name + " moved to " + motor.position);
 });
 
 brickpi.event.on('stop', function(motor) {
-    console.log(motor.name + ' stopped at position ' + motor.position);
 });

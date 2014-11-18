@@ -149,37 +149,37 @@ Handle<Value> NGetSensor(const Arguments& args) {
 
 
 void init(Handle<Object> exports) {
-  exports->Set(String::NewSymbol("ClearTick"),
+  exports->Set(String::NewSymbol("clearTick"),
       FunctionTemplate::New(NClearTick)->GetFunction());
   
-  exports->Set(String::NewSymbol("BrickPiSetup"),
+  exports->Set(String::NewSymbol("brickPiSetup"),
 	       FunctionTemplate::New(NBrickPiSetup)->GetFunction());
 
-  exports->Set(String::NewSymbol("BrickPiSetupSensors"),
+  exports->Set(String::NewSymbol("brickPiSetupSensors"),
 	       FunctionTemplate::New(NBrickPiSetupSensors)->GetFunction());
 
-  exports->Set(String::NewSymbol("BrickPiUpdateValues"),
+  exports->Set(String::NewSymbol("brickPiUpdateValues"),
                FunctionTemplate::New(NBrickPiUpdateValues)->GetFunction());
 
-  exports->Set(String::NewSymbol("SetAddress"),
+  exports->Set(String::NewSymbol("setAddress"),
                FunctionTemplate::New(NSetAddress)->GetFunction());
 
-  exports->Set(String::NewSymbol("SetMotorEnable"),
+  exports->Set(String::NewSymbol("setMotorEnable"),
                FunctionTemplate::New(NSetMotorEnable)->GetFunction());
 
-  exports->Set(String::NewSymbol("SetMotorSpeed"),
+  exports->Set(String::NewSymbol("setMotorSpeed"),
                FunctionTemplate::New(NSetMotorSpeed)->GetFunction());
 
-  exports->Set(String::NewSymbol("GetEncoder"),
+  exports->Set(String::NewSymbol("getEncoder"),
                FunctionTemplate::New(NGetEncoder)->GetFunction());
 
-  exports->Set(String::NewSymbol("GetMotorEnable"),
+  exports->Set(String::NewSymbol("getMotorEnable"),
                FunctionTemplate::New(NGetMotorEnable)->GetFunction());
 
-  exports->Set(String::NewSymbol("SetSensorType"),
+  exports->Set(String::NewSymbol("setSensorType"),
                FunctionTemplate::New(NSetSensorType)->GetFunction());
 
-  exports->Set(String::NewSymbol("GetSensor"),
+  exports->Set(String::NewSymbol("getSensor"),
                FunctionTemplate::New(NGetSensor)->GetFunction());
 }
 

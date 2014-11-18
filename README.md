@@ -3,6 +3,10 @@ brickpi-raspberry
 
 BrickPi Nodejs API module
 
+#NOTE
+This module is under active development.  The API changes often.
+
+
 This is an Nodejs module that allows controlling the BrickPi board from a Nodejs script.  The module wraps the Dexter Industries' C drivers in addition to adding native Javascript functionality.
 
 This module requires the WiringPi library to be installed on the Raspberry Pi.
@@ -34,7 +38,7 @@ var touchA = brickpi.CreateSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.
 
 robot.Setup().AddMotor(motorA).AddSensor(touchA).Run(function() {});
 
-motorA.Start(-100).StopIn(720, function() {
+motorA.Start(-100).StopIn(720, function(err) {
   // callback called when motor has reached end point
 });
 
@@ -43,7 +47,7 @@ brickpi.on.event('touch', function(sensor) {
 });
 
 brickpi.on.event('stop', function(motor) {
-   console.log("Motor " + motor.GetState().name + " has stopped");
+   console.log("Motor " + motor.GetName() + " has stopped");
 });
 ```
 
@@ -86,7 +90,7 @@ var motorA = CreateMotor({port: 0, name: 'motor A'});
 
 #### Methods
 
-GetState() returns an object containing the state of the motor, including:
+GetName(), GetPort(), isPaused(), GetCurrentSpeed() return:
 
 name, port, position (in ticks), paused (boolean), speed
 
