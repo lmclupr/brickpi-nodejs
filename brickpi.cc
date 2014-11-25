@@ -146,6 +146,39 @@ Handle<Value> NGetSensor(const Arguments& args) {
   return scope.Close(num);
 }
 
+Handle<Value> NSetUpDIMUSensor(const Arguments& args) {
+  HandleScope scope;
+
+  if (args.Length() != 1) {
+    ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+    return scope.Close(Undefined());
+  }
+
+  if (!args[0]->IsNumber()) {
+    ThrowException(Exception::TypeError(String::New("Wrong arguments")));
+    return scope.Close(Undefined());
+  }
+
+  c_setUpDIMUSensor(args[0]->NumberValue());
+}
+
+Handle<Value> NGetDIMUSensor(const Arguments& args) {
+  HandleScope scope;
+  if (args.Length() != 1) {
+    ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+    return scope.Close(Undefined());
+  }
+
+  if (!args[0]->IsNumber()) {
+    ThrowException(Exception::TypeError(String::New("Wrong arguments")));
+    return scope.Close(Undefined());
+  }
+
+  Local<Number> num = Number::New(c_getDIMUSensor(args[0]->NumberValue()));
+  return scope.Close(num);
+}
+
+
 
 
 void init(Handle<Object> exports) {
@@ -181,6 +214,12 @@ void init(Handle<Object> exports) {
 
   exports->Set(String::NewSymbol("getSensor"),
                FunctionTemplate::New(NGetSensor)->GetFunction());
+
+  exports->Set(String::NewSymbol("setUpDIMUSensor"),
+               FunctionTemplate::New(NSetUpDIMUSensor)->GetFunction());
+
+  exports->Set(String::NewSymbol("getDIMUSensor"),
+               FunctionTemplate::New(NGetDIMUSensor)->GetFunction());
 }
 
 NODE_MODULE(brickpi_capi, init)

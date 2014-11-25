@@ -10,3 +10,6 @@ long c_getEncoder(int port);
 int c_getMotorEnable(int port);
 void c_setSensorType(int port, unsigned char sensor_type);
 long c_getSensor(int port);
+
+void c_setUpDIMUSensor(int port);
+float c_getDIMUSensor(int port);

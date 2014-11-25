@@ -43,13 +43,16 @@ function createRobot() {
 
 		}
 
-
 		for (var i=0; i<t.sensors.length; i++) {
+
+		    console.log("value: " + brickpi_capi.getSensor(t.sensors[i].port));
+
                     if (t.values[i] != brickpi_capi.getSensor(t.sensors[i].port)) {
                         t.values[i] = brickpi_capi.getSensor(t.sensors[i].port);
                         t.sensors[i]._changed(t.values[i]);
                     }
                 }
+
             }, 10);
 
             return this;
@@ -73,6 +76,10 @@ function createRobot() {
 	    brickpi_capi.brickPiUpdateValues();
             return this;
         },
+	addDIMUSensor: function(sensor) {
+	    brickpi_capi.setUpDIMUSensor(sensor.port);
+	    return this;
+	},
 	stop: function() {
 	    if (this.intervalId) clearInterval(this.intervalId);
 	}
@@ -140,7 +147,7 @@ function createMotor(params) {
         },
 	pause: function() {
 	    if (!this.paused && (this.speed !== 0) && (this.endEncoderValue !== null)) {
-		console.log('speed:' + this.speed);
+		//console.log('speed:' + this.speed);
 		this.pausedSpeed = this.speed;
 		this.speed = 0;
 		brickpi_capi.setMotorSpeed(this.port, 0);
@@ -150,7 +157,7 @@ function createMotor(params) {
 	},
 	resume: function() {
 	    if (this.paused) {
-		console.log('pausedSpeed:' + this.pausedSpeed);
+		//console.log('pausedSpeed:' + this.pausedSpeed);
 		this.speed = this.pausedSpeed;
 		this.paused = false;
 		brickpi_capi.setMotorSpeed(this.port, this.speed);
@@ -168,8 +175,6 @@ function createMotor(params) {
                     this.stop();
 		}
 	    }
-
-	    console.log(this.endPoints[0] + ":"+ encoderValue);
 
 	    // checking endpoints
 	    if ((this.endPoints[0]) &&  (encoderValue > this.endPoints[0])) {
@@ -225,3 +230,36 @@ function createSensor(params) {
     return sensor;
 }
 exports.createSensor = createSensor;
+
+function createDIMUSensor(params) {
+    var sensor = {
+        name: params.name,
+        port: params.port,
+        type: params.type,
+        value: null,
+        getValue: function() {
+            return brickpi_capi.getDIMUSensor(this.port);
+        },
+        getName: function() {
+            return this.name;
+        },
+        getType: function() {
+            return this.type;
+        },
+        getPort: function() {
+            return this.port;
+        },
+        _changed: function(value) {
+//          console.log('changed called with value: ' + value);                                                                 
+            if (value !== this.value) {
+                this.value = value;
+                event.emit('change', this);
+                if (this.type === constants.SENSOR_TYPE.TOUCH) {
+                    event.emit('touch', this);
+                }
+            }
+        }
+    };
+    return sensor;
+}
+exports.createDIMUSensor = createDIMUSensor;

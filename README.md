@@ -31,14 +31,14 @@ $ npm install brickpi-raspberry
 ```javascript
 var brickpi = require('brickpi-raspberry');
 
-var robot = brickpi.CreateRobot();
-var motorA = brickpi.CreateMotor({port: brickpi.MOTOR.A, name: 'Upper arm'});
+var robot = brickpi.createRobot();
+var motorA = brickpi.createMotor({port: brickpi.MOTOR.A, name: 'Upper arm'});
 
-var touchA = brickpi.CreateSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, name: 'Touch Sensor on upper arm'});
+var touchA = brickpi.createSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, name: 'Touch Sensor on upper arm'});
 
-robot.Setup().AddMotor(motorA).AddSensor(touchA).Run(function() {});
+robot.setup().addMotor(motorA).addSensor(touchA).run(function() {});
 
-motorA.Start(-100).StopIn(720, function(err) {
+motorA.start(-100).stopIn(720, function(err) {
   // callback called when motor has reached end point
 });
 
@@ -47,7 +47,7 @@ brickpi.on.event('touch', function(sensor) {
 });
 
 brickpi.on.event('stop', function(motor) {
-   console.log("Motor " + motor.GetName() + " has stopped");
+   console.log("Motor " + motor.getName() + " has stopped");
 });
 ```
 
@@ -57,64 +57,90 @@ brickpi.on.event('stop', function(motor) {
 
 #### Creation
 
-Use the CreateRobot() object contructor.
+Use the createRobot() object contructor.
 
 #### Setup
 
-To initialize the robot object, use the Setup() method.
+To initialize the robot object, use the setup() method.
 
 #### Adding Sensors and Motors
 
-Use the AddMotor() and AddSensor() methods to add motors and sensors.
+Use the addMotor() and addSensor() methods to add motors and sensors.
 
 #### Running the robot
 
-Use the Run() method the start your robot.  This launches a polling loop that calls BricpiUpdateValue at a 10msec interval.
+Use the run() method the start your robot.  This launches a polling loop that calls BricpiUpdateValue at a 10msec interval.
 
-The Run method can take an optional Callback function that will get called at each 10msec cycle so you can run code at each interval.
+The run method can take an optional Callback function that will get called at each 10msec cycle so you can run code at each interval.
 
 #### Stopping the robot
 
-The Stop() method will do that.  This will stop the polling, ending all processes and exiting the nodescript.
+The stop() method will do that.  This will stop the communication polling to the Brickpi, ending all processes and exiting the nodescript.
 
 
 ### Motor Object
 
 #### Creation
 
-CreateMotor() is used to create the motor object.  Specify port aand optionally name:
+createMotor() is used to create the motor object.  Specify port aand optionally name:
 
 ```javascript
-var motorA = CreateMotor({port: 0, name: 'motor A'});
+var motorA = createMotor({port: brickpi.MOTOR.A, name: 'motor A'});
 ``` 
 
 #### Methods
 
-GetName(), GetPort(), isPaused(), GetCurrentSpeed() return:
+getName(), getPort(), isPaused(), getCurrentSpeed() return:
 
 name, port, position (in ticks), paused (boolean), speed
 
+start(speed) starts the motor at given speed.
 
-Start(speed) starts the motor at given speed.
+stop() stops the motor.
 
-Stop() stops the motor.
+stopIn(ticks, callback) will stop the motor in the given amount of ticks.  Ticks is an absolute value.  The callback will be called when the motor has reached the desired position and stopped.
 
-StopIn(ticks, callback) will stop the motor in the given amount of ticks.  Ticks is an absolute value.  The callback will be called when the motor has reached the desired position and stopped.
+pause()  pauses the motor.  Only makes sense when StopIn was called before.
 
-Pause()  pauses the motor.  Only makes sense when StopIn was called before.
-
-Resume() resumes the motor's travel to the end tick.
+resume() resumes the motor's travel to the end tick.
 
 
 ### Sensor Object
 
 #### Creation
 
-To create a sensor, use CreateSensor() providing a name, port and type.
+To create a sensor, use createSensor() providing a name, port and type.
+
+```javascript
+var sensorA = createSensor({port: brickpi.SENSOR_PORT.ONE, type: bricpi.SENSOR_TYPE.TOUCH, name: 'motor A'});
+```
+
+TOUCH, ULTRASONIC_CONT, ULTRASONIC_SS, COLOR_FULL
 
 #### Methods
 
-GetState() returns an object that contains the state of the sensor, including name, port, type and current value.
+getName(), getValue() returns sensor name and sensor value respectively
+
+
+### Dexter IMU (dIMU) Sensor Object
+
+The dIMU sensor is a different beast then other Lego NXT sensors.  As such, a different constructor is used.
+
+#### Creation & Usage
+
+Use createDIMUSensor() providing name and port only.
+
+```javascript
+var dimuA = createDIMUSensor({port: brickpi.SENSOR_PORT.TWO, name: 'dimu x axis'});
+```
+
+Use addDIMUSensor() to add the sensor to the robot.
+
+And finally, use getValue() to read the value.  
+
+#### Note
+
+For now, the Dexter dIMU sensor will only return the acceleration on the X axis only.
 
 
 ## Events
@@ -130,7 +156,62 @@ GetState() returns an object that contains the state of the sensor, including na
 'stuck' when a motor stopped moving because of some external obstruction.  i.e. the motor's speed is non-null, yet, it isn't turning/
  
 
+## A Simple Project Example
+
+```javascript
+
+var brickpi = require('brickpi-raspberry');
+
+var robot = brickpi.createRobot();
+var motorA = brickpi.createMotor({port: brickpi.MOTOR.A, name: 'motorA'});
+var motorB = brickpi.createMotor({port: brickpi.MOTOR.B, name: 'motorB'});
+var motorC = brickpi.createMotor({port: brickpi.MOTOR.C, name: 'motorC'});
+var motorD = brickpi.createMotor({port: brickpi.MOTOR.D, name: 'Turret motor'});
+
+
+var touchA = brickpi.createSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, nam\
+e: 'Touch Sensor on upper arm'});
+
+robot.setup().addMotor(motorA).addMotor(motorB).addMotor(motorC).addSensor(touchA).addMotor(motorD).ru\
+n(function() {});
+
+motorA.start(-100).stopIn(14000, function() {
+    motorB.start(-100).stopIn(14000, function() {
+        motorC.start(200).stopIn(13000, function() {
+            motorD.start(100).stopIn(140, function() {
+                console.log('Finished sequence');
+                robot.stop(); // this kills communication to brickpi.                                  
+            });
+        });
+    });
+});
+
+brickpi.event.on('change', function(sensor) {
+    console.log(sensor.getName() + ' changed to ' + sensor.GetValue());
+});
+
+brickpi.event.on('touch', function(sensor) {
+    console.log('touched issued');
+    if (sensor.getValue() === 1) {
+        if (!motorB.isPaused()) {
+            motorB.pause();
+        } else {
+            motorB.resume();
+        }
+    }
+});
+
+brickpi.event.on('move', function(motor) {
+});
+
+brickpi.event.on('stop', function(motor) {
+});
+
+```
+
 ## Limitations
 
 This is my first go at this module.  I have only implemented the LEGO NXT Touch, Color and Ultrasonic sensors for now.
+I just added the Dexter dIMU sensor, but only the X axis Accelerometer.
+
 Stay posted, I'll be adding some more soon.
