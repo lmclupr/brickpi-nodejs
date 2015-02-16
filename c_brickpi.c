@@ -97,18 +97,23 @@ void c_setUpDIMUSensor(int port) {
   BrickPi.SensorI2COut   [port][I2C_DEVICE_DIMU][1] = DIMU_ACC_RANGE_2G | DIMU_ACC_MODE_MEAS;
 }
 
-float c_getDIMUSensor(int port) {
+float c_getDIMUSensor(int port, int axis) {
   int xx,yy,zz;
   short int           X, Y, Z;
   float x,y,z;
   float angle;
 
+  if (axis == 0) {
+    BrickPi.SensorI2COut   [port][I2C_DEVICE_DIMU][0] = 0x06;
+  } else if (axis == 1) {
+    BrickPi.SensorI2COut   [port][I2C_DEVICE_DIMU][0] = 0x07;
+  } else {
+    BrickPi.SensorI2COut   [port][I2C_DEVICE_DIMU][0] = 0x08;
+  }
+
   BrickPi.SensorI2CAddr    [port][I2C_DEVICE_DIMU] = DIMU_ACC_I2C_ADDR;
   BrickPi.SensorI2CWrite [port][I2C_DEVICE_DIMU]    = 1;
   BrickPi.SensorI2CRead  [port][I2C_DEVICE_DIMU]    = 1;  
-  BrickPi.SensorI2COut   [port][I2C_DEVICE_DIMU][0] = 0x06;
-  //  BrickPiSetupSensors();
-  //  BrickPiUpdateValues();
   xx = BrickPi.SensorI2CIn   [port][I2C_DEVICE_DIMU][0];
   if(xx>128) xx-=256;
   x = ((float)(xx))/64.0;

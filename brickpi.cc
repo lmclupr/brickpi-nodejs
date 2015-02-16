@@ -164,7 +164,7 @@ Handle<Value> NSetUpDIMUSensor(const Arguments& args) {
 
 Handle<Value> NGetDIMUSensor(const Arguments& args) {
   HandleScope scope;
-  if (args.Length() != 1) {
+  if (args.Length() != 2) {
     ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
     return scope.Close(Undefined());
   }
@@ -174,7 +174,12 @@ Handle<Value> NGetDIMUSensor(const Arguments& args) {
     return scope.Close(Undefined());
   }
 
-  Local<Number> num = Number::New(c_getDIMUSensor(args[0]->NumberValue()));
+  if (!args[1]->IsNumber()) {
+    ThrowException(Exception::TypeError(String::New("Wrong arguments")));
+    return scope.Close(Undefined());
+  }
+
+  Local<Number> num = Number::New(c_getDIMUSensor(args[0]->NumberValue(), args[1]->NumberValue()));
   return scope.Close(num);
 }
 

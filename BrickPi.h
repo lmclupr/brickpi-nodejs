@@ -38,7 +38,7 @@
 #ifndef __BrickPi_h_
 #define __BrickPi_h_
 
-// #define DEBUG
+//#define DEBUG
 
 #include <wiringPi.h>
 

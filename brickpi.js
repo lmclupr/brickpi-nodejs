@@ -9,7 +9,7 @@ exports.MOTOR = constants.MOTOR;
 exports.SENSOR_PORT = constants.SENSOR_PORT;
 exports.SENSOR_TYPE = constants.SENSOR_TYPE;
 
-function createRobot() {
+function Robot() {
     var robot = {
         motors: [],
         encoders: [0,0,0,0],
@@ -40,11 +40,9 @@ function createRobot() {
 			    t.motors[i]._stuck(t.encoders[i]);
 			}
 		    }
-
 		}
 
 		for (var i=0; i<t.sensors.length; i++) {
-
 		    console.log("value: " + brickpi_capi.getSensor(t.sensors[i].port));
 
                     if (t.values[i] != brickpi_capi.getSensor(t.sensors[i].port)) {
@@ -86,10 +84,10 @@ function createRobot() {
     }
     return robot;
 }
-exports.createRobot = createRobot;
+exports.Robot = Robot;
 
 
-function createMotor(params) {
+function Motor(params) {
     var motor = {
         port: params.port,
         name: params.name,
@@ -98,7 +96,6 @@ function createMotor(params) {
         callback: null,
 	pausedSpeed: 0,
 	paused: false,
-	endPoints: [null, null],
         getPosition: function() {
             return this.position;
         },
@@ -114,14 +111,6 @@ function createMotor(params) {
         getPort: function() {
             return this.port;
         },
-	setEndPoints: function(a, b) {
-	    var currentPosition = brickpi_capi.getEncoder(this.port);
-	    console.log(currentPosition);
-	    if (b > 0) console.log("lower end point must be negative");
-	    if (a < 0) console.log("higher end point must be position");
-	    this.endPoints = [a + currentPosition, b + currentPosition];
-	    return this;
-	},
         start: function(speed, callback) {
             this.speed = speed;
             brickpi_capi.setMotorSpeed(this.port, speed);
@@ -175,30 +164,19 @@ function createMotor(params) {
                     this.stop();
 		}
 	    }
-
-	    // checking endpoints
-	    if ((this.endPoints[0]) &&  (encoderValue > this.endPoints[0])) {
-		console.log('end point reached');
-                this.stop('end point reached');
-            }
-
-            if ((this.endPoints[1]) &&  (encoderValue < this.endPoints[1])) {
-		console.log('endpoint reached');
-                this.stop('end point reached');
-	    }
         },
 	_stuck: function(encoderValue) {
 	    this.position = encoderValue;
-	    event.emit('stuck', this);
-	    this.stop('stuck');
+	    event.emit('stopped', this);
+	    this.stop('stopped');
 	}
     };
     return motor;
 }
-exports.createMotor = createMotor;
+exports.Motor = Motor;
 
 
-function createSensor(params) {
+function Sensor(params) {
     var sensor = {
 	name: params.name,
 	port: params.port,
@@ -229,16 +207,21 @@ function createSensor(params) {
     };
     return sensor;
 }
-exports.createSensor = createSensor;
+exports.Sensor = Sensor;
 
-function createDIMUSensor(params) {
+function DIMUSensor(params) {
     var sensor = {
         name: params.name,
         port: params.port,
         type: params.type,
         value: null,
         getValue: function() {
-            return brickpi_capi.getDIMUSensor(this.port);
+	    var z = brickpi_capi.getDIMUSensor(this.port, 0);
+	    brickpi_capi.brickPiUpdateValues();
+	    var x = brickpi_capi.getDIMUSensor(this.port, 1);
+	    brickpi_capi.brickPiUpdateValues();
+	    var y = brickpi_capi.getDIMUSensor(this.port, 2);
+	    return {'x': x, 'y': y, 'z': z};
         },
         getName: function() {
             return this.name;
@@ -262,4 +245,4 @@ function createDIMUSensor(params) {
     };
     return sensor;
 }
-exports.createDIMUSensor = createDIMUSensor;
+exports.DIMUSensor = DIMUSensor;
