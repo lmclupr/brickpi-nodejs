@@ -40,5 +40,6 @@ var SENSOR_TYPE = {
     ULTRASONIC_SS: 34,
     COLOR_FULL: 36,
     I2C: 41,
+    DIMU: 99,
 };
 exports.SENSOR_TYPE = SENSOR_TYPE;

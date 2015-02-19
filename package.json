@@ -1,6 +1,6 @@
 {
   "name": "brickpi-raspberry",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "BrickPi Nodejs API",
   "main": "brickpi.js",
   "scripts": {
@@ -26,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/lmclupr/brickpi-nodejs/issues"
   },
-  "homepage": "https://github.com/lmclupr/brickpi-nodejs"
+  "homepage": "https://github.com/lmclupr/brickpi-nodejs",
+  "directories": {
+    "example": "examples"
+  }
 }

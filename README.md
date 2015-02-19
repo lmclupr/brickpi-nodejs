@@ -6,11 +6,13 @@ BrickPi Nodejs API module
 #NOTE
 This module is under active development.  The API changes often.
 
-
 This is an Nodejs module that allows controlling the BrickPi board from a Nodejs script.  The module wraps the Dexter Industries' C drivers in addition to adding native Javascript functionality.
 
 This module requires the WiringPi library to be installed on the Raspberry Pi.
 
+## Changes
+
+Folded DIMU sensor into regular Sensor class.  Added support for acceleration on all three axis.  Changed event handling to a proper "inherited" approach..
 
 ## Install
 
@@ -42,11 +44,12 @@ motorA.start(-100).stopIn(720, function(err) {
   // callback called when motor has reached end point
 });
 
-brickpi.on.event('touch', function(sensor) {
-  // touch sensor was touched.
+touchA.on('change', function() {
+	// access value of touchA sensor.
+	console.log(touchA.getValue());
 });
 
-brickpi.on.event('stop', function(motor) {
+motorA.on('stop', function(motor) {
    console.log("Motor " + motor.getName() + " has stopped");
 });
 ```
@@ -115,31 +118,15 @@ To create a sensor, use Sensor() providing a name, port and type.
 var sensorA = new brickpi.Sensor({port: brickpi.SENSOR_PORT.ONE, type: bricpi.SENSOR_TYPE.TOUCH, name: 'motor A'});
 ```
 
-TOUCH, ULTRASONIC_CONT, ULTRASONIC_SS, COLOR_FULL
+TOUCH, ULTRASONIC_CONT, ULTRASONIC_SS, COLOR_FULL, DIMU
 
 #### Methods
 
-getName(), getValue() returns sensor name and sensor value respectively
+getName(), getValue() returns sensor name and sensor value respectively.  In the case of the DIMU sensor, a structure is returned:
+{x: x, y: y, z: z}
 
-
-### Dexter IMU (dIMU) Sensor Object
-
-The dIMU sensor is a different beast then other Lego NXT sensors.  As such, a different constructor is used.
-
-#### Creation & Usage
-
-Use createDIMUSensor() providing name and port only.
-
-```javascript
-var dimuA = new brickpi.DIMUSensor({port: brickpi.SENSOR_PORT.TWO, name: 'dimu x axis'});
-```
-
-Use addDIMUSensor() to add the sensor to the robot.
-
-And finally, use getValue() to read the value.  
 
 #### Note
-
 For now, the Dexter dIMU sensor will only return the acceleration only in an object ex: {x: 1.2, y:0.1 z:0.2}
 
 
@@ -147,13 +134,11 @@ For now, the Dexter dIMU sensor will only return the acceleration only in an obj
 
 'change' event is fired when a sensor's value has changed.  
 
-'touch' event is fired when a touch sensor was pressed or depressed.
-
 'stop' when a motor has stopped.
 
 'move' when a motor has moved.
 
-'stuck' when a motor stopped moving because of some external obstruction.  i.e. the motor's speed is non-null, yet, it isn't turning/
+'stopped' when a motor stopped moving because of some external obstruction.  i.e. the motor's speed is non-null, yet, it isn't turning/
  
 
 ## A Simple Project Example
@@ -185,30 +170,17 @@ motorA.start(-100).stopIn(14000, function() {
     });
 });
 
-brickpi.event.on('change', function(sensor) {
-    console.log(sensor.getName() + ' changed to ' + sensor.GetValue());
+motorA.on('move', function() {
 });
 
-brickpi.event.on('touch', function(sensor) {
-    console.log('touched issued');
-    if (sensor.getValue() === 1) {
-        if (!motorB.isPaused()) {
-            motorB.pause();
-        } else {
-            motorB.resume();
-        }
-    }
-});
-
-brickpi.event.on('move', function(motor) {
-});
-
-brickpi.event.on('stop', function(motor) {
+motorB.on('stop', function() {
 });
 
 ```
 
 ## Limitations
+This module is improving quickly.  Stay posted.
+
 
 This is my first go at this module.  I have only implemented the LEGO NXT Touch, Color and Ultrasonic sensors for now.
 I just added the Dexter dIMU sensor, but only the acceleration bit.
