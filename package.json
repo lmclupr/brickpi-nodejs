@@ -4,7 +4,7 @@
   "description": "BrickPi Nodejs API",
   "main": "Brickpi.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -17,9 +17,9 @@
     "Lego"
   ],
   "dependencies": {
-    "events": "latest"
-    "serialport": "latest"
-    "async": "lastest"
+    "events": "latest",
+    "serialport": "1.6.3",
+    "async": "0.9.0"
   },
   "author": "Luc Prieur <luc.prieur.ing@gmail.com>",
   "license": "ISC",
@@ -27,8 +27,5 @@
   "bugs": {
     "url": "https://github.com/lmclupr/brickpi-nodejs/issues"
   },
-  "homepage": "https://github.com/lmclupr/brickpi-nodejs",
-  "directories": {
-    "example": "examples"
-  }
+  "homepage": "https://github.com/lmclupr/brickpi-nodejs"
 }
