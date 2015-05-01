@@ -1,11 +1,10 @@
 {
   "name": "brickpi-raspberry",
-  "version": "0.0.9",
+  "version": "0.3.0",
   "description": "BrickPi Nodejs API",
-  "main": "brickpi.js",
+  "main": "Brickpi.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "node-gyp rebuild"
   },
   "repository": {
     "type": "git",
@@ -19,10 +18,12 @@
   ],
   "dependencies": {
     "events": "latest"
+    "serialport": "latest"
+    "async": "lastest"
   },
   "author": "Luc Prieur <luc.prieur.ing@gmail.com>",
   "license": "ISC",
-  "gypfile": true,
+  "gypfile": false,
   "bugs": {
     "url": "https://github.com/lmclupr/brickpi-nodejs/issues"
   },

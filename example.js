@@ -1,44 +1,37 @@
 var brickpi = require('brickpi-raspberry');
 
-var robot = brickpi.createRobot();
-var motorA = brickpi.createMotor({port: brickpi.MOTOR.A, name: 'motorA'});
-var motorB = brickpi.createMotor({port: brickpi.MOTOR.B, name: 'motorB'});
-var motorC = brickpi.createMotor({port: brickpi.MOTOR.C, name: 'motorC'});
-var motorD = brickpi.createMotor({port: brickpi.MOTOR.D, name: 'Turret motor'});
+var robot = new brickpi.BrickPi();
+var motorA = new brickpi.Motor({port: brickpi.PORT.MA, name: 'motorA'});
+var motorB = new brickpi.Motor({port: brickpi.PORT.MB, name: 'motorB'});
+var motorC = new brickpi.Motor({port: brickpi.PORT.MC, name: 'motorC'});
+var motorD = new brickpi.Motor({port: brickpi.PORT.MD, name: 'Turret motor'});
+var touchA = new brickpi.Sensor({port: brickpi.PORT.ONE, type: brickpi.SENSOR_TYPE.NXT.TOUCH, name: 'Touch Sensor on upper arm'});
 
+robot.addMotor(motorA).addMotor(motorB).addMotor(motorC).addSensor(touchA).addMotor(motorD).setup();
 
-var touchA = brickpi.createSensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, name: 'Touch Sensor on upper arm'});
+robot.on('ready', function() {
+	motorA.resetPosition();
+	motorB.resetPosition();
+	robot.run();
 
-robot.setup().addMotor(motorA).addMotor(motorB).addMotor(motorC).addSensor(touchA).addMotor(motorD).run(function() {});
-
-motorA.start(-100).stopIn(14000, function() {
-    motorB.start(-100).stopIn(14000, function() {
-	motorC.start(200).stopIn(13000, function() {
-	    motorD.start(100).stopIn(140, function() {
-		console.log('Finished sequence');
-		robot.stop(); // this kills communication to brickpi.
-	    });
+	motorA.start(100).moveTo(5000, function(err) {
+		// called when motorA has reached 5000 ticks (2500 degrees in rotation)
 	});
-    });
 });
 
-brickpi.event.on('change', function(sensor) {
-    console.log(sensor.getName() + ' changed to ' + sensor.GetValue());
+setTimeout(function() {
+	motorB.start(50);
+}, 3000);
+
+setTimeout(function() {
+	motorB.stop();
+}, 5000);
+
+robot.on('tick', function() {
+	// called at every polling cycle.
+	var value = touchA.getValue();
 });
 
-brickpi.event.on('touch', function(sensor) {
-    console.log('touched issued');
-    if (sensor.getValue() === 1) {
-	if (!motorB.isPaused()) {
-	    motorB.pause();
-	} else {
-	    motorB.resume();
-	}
-    }
-});
-
-brickpi.event.on('move', function(motor) {
-});
-
-brickpi.event.on('stop', function(motor) {
-});
+setTimeout(function() {
+	robot.stop();
+}, 10000);
