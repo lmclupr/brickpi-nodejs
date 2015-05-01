@@ -20,12 +20,14 @@ var SERIAL_PORT_ADDRESS = '/dev/ttyAMA0';
 var BrickPi = function(params) {
     ee.call(this);
 
-    if (params.pollingInterval) {
-	INTERVAL_TIME = params.pollingInterval;
-    }
+    if (params) {
+	    if (params.pollingInterval) {
+		INTERVAL_TIME = params.pollingInterval;
+    	}
 
-    if (params.serialPortAddress) {
-	SERIAL_PORT_ADDRESS = params.serialPortAddress;
+	    if (params.serialPortAddress) {
+		SERIAL_PORT_ADDRESS = params.serialPortAddress;
+    	}
     }
 
     this._running = false;

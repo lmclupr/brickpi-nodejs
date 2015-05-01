@@ -1,0 +1,102 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node', '/usr/local/bin/npm', 'publish', './' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.37
+4 verbose publish [ './' ]
+5 verbose cache add [ './', null ]
+6 verbose cache add name=undefined spec="./" args=["./",null]
+7 verbose parsed url { protocol: null,
+7 verbose parsed url   slashes: null,
+7 verbose parsed url   auth: null,
+7 verbose parsed url   host: null,
+7 verbose parsed url   port: null,
+7 verbose parsed url   hostname: null,
+7 verbose parsed url   hash: null,
+7 verbose parsed url   search: null,
+7 verbose parsed url   query: null,
+7 verbose parsed url   pathname: './',
+7 verbose parsed url   path: './',
+7 verbose parsed url   href: './' }
+8 silly lockFile 0ee6c175- ./
+9 verbose lock ./ /home/pi/.npm/0ee6c175-.lock
+10 verbose tar pack [ '/home/pi/.npm/brickpi-raspberry/0.3.0/package.tgz', './' ]
+11 verbose tarball /home/pi/.npm/brickpi-raspberry/0.3.0/package.tgz
+12 verbose folder ./
+13 info prepublish brickpi-raspberry@0.3.0
+14 silly lockFile 04cb2bca-tar tar://./
+15 verbose lock tar://./ /home/pi/.npm/04cb2bca-tar.lock
+16 silly lockFile 5d0aa66e-ckpi-raspberry-0-3-0-package-tgz tar:///home/pi/.npm/brickpi-raspberry/0.3.0/package.tgz
+17 verbose lock tar:///home/pi/.npm/brickpi-raspberry/0.3.0/package.tgz /home/pi/.npm/5d0aa66e-ckpi-raspberry-0-3-0-package-tgz.lock
+18 silly lockFile 04cb2bca-tar tar://./
+19 silly lockFile 04cb2bca-tar tar://./
+20 silly lockFile 5d0aa66e-ckpi-raspberry-0-3-0-package-tgz tar:///home/pi/.npm/brickpi-raspberry/0.3.0/package.tgz
+21 silly lockFile 5d0aa66e-ckpi-raspberry-0-3-0-package-tgz tar:///home/pi/.npm/brickpi-raspberry/0.3.0/package.tgz
+22 silly lockFile 7f5d1c0d--brickpi-raspberry-0-3-0-package /home/pi/.npm/brickpi-raspberry/0.3.0/package
+23 verbose lock /home/pi/.npm/brickpi-raspberry/0.3.0/package /home/pi/.npm/7f5d1c0d--brickpi-raspberry-0-3-0-package.lock
+24 silly lockFile 7f5d1c0d--brickpi-raspberry-0-3-0-package /home/pi/.npm/brickpi-raspberry/0.3.0/package
+25 silly lockFile 7f5d1c0d--brickpi-raspberry-0-3-0-package /home/pi/.npm/brickpi-raspberry/0.3.0/package
+26 silly lockFile 0ee6c175- ./
+27 silly lockFile 0ee6c175- ./
+28 silly publish { name: 'brickpi-raspberry',
+28 silly publish   version: '0.3.0',
+28 silly publish   description: 'BrickPi Nodejs API',
+28 silly publish   main: 'Brickpi.js',
+28 silly publish   scripts: { test: 'echo "Error: no test specified" && exit 1' },
+28 silly publish   repository:
+28 silly publish    { type: 'git',
+28 silly publish      url: 'https://github.com/lmclupr/brickpi-nodejs.git' },
+28 silly publish   keywords: [ 'BrickPi', 'RaspBerry', 'Dexter', 'Lego' ],
+28 silly publish   dependencies: { events: 'latest', serialport: '1.6.3', async: '0.9.0' },
+28 silly publish   author: { name: 'Luc Prieur', email: 'luc.prieur.ing@gmail.com' },
+28 silly publish   license: 'ISC',
+28 silly publish   gypfile: false,
+28 silly publish   bugs: { url: 'https://github.com/lmclupr/brickpi-nodejs/issues' },
+28 silly publish   homepage: 'https://github.com/lmclupr/brickpi-nodejs',
+28 silly publish   readme: 'brickpi-raspberry\n==============\n\nBrickPi Nodejs API module\n\n#Introduction\n\nThis is an Nodejs module that allows controlling the BrickPi board from a Nodejs script. Coupling Dexter Industries amazing BrickiPi board \nwith the power of Nodejs makes for a powerful way to build and program LEGO robots.\n\n#NOTE\n\nThis module is under active development.  The API changes often.\n\n## Changes\n\nI re-coded the entire module so as to use pure Javascript to communicate with the BrickPi board, therefore no longer relying on \nDexter Industries C librairies. \n\nAdded PID controllers to the motors for smooth operation.\n\n## Install\n\nYou\'ll need a BrickPi compatible Raspian distribution.\n\nThen:\n\n```bash\n$ npm install brickpi-raspberry\n```\n\n## Examples\n\n\n\n### Running Motors and Sensors\n\n```javascript\nvar brickpi = require(\'brickpi-raspberry\');\n\nvar robot = new brickpi.BrickPi();\nvar motorA = new brickpi.Motor({port: brickpi.PORT.MA, name: \'motorA\'});\nvar motorB = new brickpi.Motor({port: brickpi.PORT.MB, name: \'motorB\'});\nvar touchA = new brickpi.Sensor({port: brickpi.PORT.ONE, type: brickpi.SENSOR_TYPE.NXT.TOUCH, name: \'Touch Sensor on upper arm\'});\n\nrobot.addMotor(motorA).addMotor(motorB).addSensor(touchA).setup();\n\nrobot.on(\'ready\', function() {\n\tmotorA.resetPosition();\n\tmotorB.resetPosition();\n\trobot.run();\n\n\tmotorA.start(100).moveTo(5000, function(err) {\n\t\t// called when motorA has reached 5000 ticks (2500 degrees in rotation)\n\t});\n});\n\nsetTimeout(function() {\n\tmotorB.start(50);\n}, 3000);\n\nsetTimeout(function() {\n\tmotorB.stop();\n}, 5000);\n\nrobot.on(\'tick\', function() {\n\t// called at every polling cycle.\n\tvar value = touchA.getValue();\n});\n\nsetTimeout(function() {\n\trobot.stop();\n}, 10000);\n\n```\n\n## API Documentation\n\n### Robot Object\n\n#### Creation\n\nUse the BrickPi() object contructor.  An options object can be passed to the constructor.\n\n#### Adding Sensors and Motors\n\nUse the addMotor() and addSensor() methods to add motors and sensors.\n\n#### Setup\n\nTo initialize the BirckPi object, use the setup() method.  This method will sestablish the serial port connection to the BrickPi board, set timeouts and configure the sensors.\n\n#### Running the robot\n\nUse the run() method the start your robot.  This launches a polling loop that updates motors speeds and encoders and fetches fresh sensor values.\n\n#### Stopping the robot\n\nThe stop() method will do that.  This will stop the communication polling to the Brickpi, ending all processes and exiting the nodescript.\n\n\n### Motor Object\n\n#### Creation\n\nMotor() is used to create the motor object.  Specify port aand optionally name:\n\n```javascript\nvar motorA = new brickpi.Motor({port: brickpi.MOTOR.A, name: \'motor A\'});\n``` \n\n#### Methods\n\nstart(speed) starts the motor at given speed.\n\nstop() stops the motor.\n\nstopIn(ticks, callback) will stop the motor in the given amount of ticks.  Ticks is an absolute value.  The callback will be called when the motor has reached the desired position and stopped.\n\nmoveTo(ticks, callback) will get the motor position to the desired tick value (2 ticks equal 1 degree).  Once the desired position is reached, the callback is invoked.\n\n### Sensor Object\n\n#### Creation\n\nTo create a sensor, use Sensor() providing a name, port and type.\n\n```javascript\nvar sensorA = new brickpi.Sensor({port: brickpi.SENSOR_PORT.ONE, type: bricpi.SENSOR_TYPE.TOUCH, name: \'motor A\'});\n```\n\nTOUCH, ULTRASONIC_CONT, ULTRASONIC_SS, COLOR_FULL, DIMU\n\n#### Methods\n\ngetName(), getValue() returns sensor name and sensor value respectively.  In the case of the DIMU sensor, a structure is returned:\n{x: x, y: y, z: z}\n\n\n#### Note\nFor now, the Dexter dIMU sensor will only return the acceleration only in an object ex: {x: 1.2, y:0.1 z:0.2}\n\n\n## Events\n\n\'change\' event is fired when a sensor\'s value has changed.  \n\n\'stop\' when a motor has stopped.\n\n\'move\' when a motor has moved.\n\n\'stopped\' when a motor stopped moving because of some external obstruction.  i.e. the motor\'s speed is non-null, yet, it isn\'t turning/\n \n\n## A Simple Project Example\n\n```javascript\n\nvar brickpi = require(\'brickpi-raspberry\');\n\nvar robot = new brickpi.Robot();\nvar motorA = new brickpi.Motor({port: brickpi.MOTOR.A, name: \'motorA\'});\nvar motorB = new brickpi.Motor({port: brickpi.MOTOR.B, name: \'motorB\'});\nvar motorC = new brickpi.Motor({port: brickpi.MOTOR.C, name: \'motorC\'});\nvar motorD = new brickpi.Motor({port: brickpi.MOTOR.D, name: \'Turret motor\'});\n\n\nvar touchA = new brickpi.Sensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, nam\\\ne: \'Touch Sensor on upper arm\'});\n\nrobot.setup().addMotor(motorA).addMotor(motorB).addMotor(motorC).addSensor(touchA).addMotor(motorD).run(function() {});\n\nmotorA.start(-100).stopIn(14000, function() {\n    motorB.start(-100).stopIn(14000, function() {\n        motorC.start(200).stopIn(13000, function() {\n            motorD.start(100).stopIn(140, function() {\n                console.log(\'Finished sequence\');\n                robot.stop(); // this kills communication to brickpi.                              \n            });\n        });\n    });\n});\n\nmotorA.on(\'move\', function() {\n});\n\nmotorB.on(\'stop\', function() {\n});\n\n```\n\n## Limitations\nThis module is improving quickly.  Stay posted.\n\n\nThis is my first go at this module.  I have only implemented the LEGO NXT Touch, Color and Ultrasonic sensors for now.\nI just added the Dexter dIMU sensor, but only the acceleration bit.\n\nStay posted, I\'ll be adding some more soon.\n',
+28 silly publish   readmeFilename: 'README.md',
+28 silly publish   gitHead: '714d3560c750cf4e48e07654a164785a363405f9',
+28 silly publish   _id: 'brickpi-raspberry@0.3.0',
+28 silly publish   _shasum: '1b83b09ac39eb247e182bc1cb3d1083f6664490d',
+28 silly publish   _from: './' }
+29 verbose request where is /brickpi-raspberry
+30 verbose request registry https://registry.npmjs.org/
+31 verbose request id e4d1db994bd173ca
+32 verbose url raw /brickpi-raspberry
+33 verbose url resolving [ 'https://registry.npmjs.org/', './brickpi-raspberry' ]
+34 verbose url resolved https://registry.npmjs.org/brickpi-raspberry
+35 verbose request where is https://registry.npmjs.org/brickpi-raspberry
+36 info trying registry request attempt 1 at 16:47:31
+37 http PUT https://registry.npmjs.org/brickpi-raspberry
+38 http 403 https://registry.npmjs.org/brickpi-raspberry
+39 verbose headers { 'content-type': 'application/json',
+39 verbose headers   'cache-control': 'max-age=60',
+39 verbose headers   'content-length': '95',
+39 verbose headers   'accept-ranges': 'bytes',
+39 verbose headers   date: 'Fri, 01 May 2015 20:47:33 GMT',
+39 verbose headers   via: '1.1 varnish',
+39 verbose headers   connection: 'keep-alive',
+39 verbose headers   'x-served-by': 'cache-jfk1022-JFK',
+39 verbose headers   'x-cache': 'MISS',
+39 verbose headers   'x-cache-hits': '0',
+39 verbose headers   'x-timer': 'S1430513252.151205,VS0,VE1108' }
+40 error publish Failed PUT 403
+41 error Error: "You cannot publish over the previously published version 0.3.0." : brickpi-raspberry
+41 error     at RegClient.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:308:14)
+41 error     at Request._callback (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:246:65)
+41 error     at Request.self.callback (/usr/local/lib/node_modules/npm/node_modules/request/request.js:236:22)
+41 error     at Request.emit (events.js:98:17)
+41 error     at Request.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:1142:14)
+41 error     at Request.emit (events.js:117:20)
+41 error     at IncomingMessage.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:1096:12)
+41 error     at IncomingMessage.emit (events.js:117:20)
+41 error     at _stream_readable.js:944:16
+41 error     at process._tickCallback (node.js:448:13)
+42 error If you need help, you may report this *entire* log,
+42 error including the npm and node versions, at:
+42 error     <http://github.com/npm/npm/issues>
+43 error System Linux 3.18.7-v7+
+44 error command "/usr/local/bin/node" "/usr/local/bin/npm" "publish" "./"
+45 error cwd /home/pi/workspace/node-projects/brickpi/brickpi-nodejs
+46 error node -v v0.10.37
+47 error npm -v 1.4.28
+48 verbose exit [ 1, true ]
