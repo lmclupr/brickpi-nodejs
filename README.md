@@ -3,12 +3,12 @@ brickpi-raspberry
 
 BrickPi Nodejs API module
 
-#Introduction
+# Introduction
 
 This is an Nodejs module that allows controlling the BrickPi board from a Nodejs script. Coupling Dexter Industries amazing BrickiPi board 
 with the power of Nodejs makes for a powerful way to build and program LEGO robots.
 
-#NOTE
+# NOTE
 
 This module is under active development.  The API changes often.
 
@@ -39,9 +39,9 @@ $ npm install brickpi-raspberry
 var brickpi = require('brickpi-raspberry');
 
 var robot = new brickpi.BrickPi();
-var motorA = new brickpi.Motor({port: brickpi.PORT.MA, name: 'motorA'});
-var motorB = new brickpi.Motor({port: brickpi.PORT.MB, name: 'motorB'});
-var touchA = new brickpi.Sensor({port: brickpi.PORT.ONE, type: brickpi.SENSOR_TYPE.NXT.TOUCH, name: 'Touch Sensor on upper arm'});
+var motorA = new brickpi.motors.Motor({port: brickpi.PORTS.MA, name: 'motorA'});
+var motorB = new brickpi.motors.Motor({port: brickpi.PORTS.MB, name: 'motorB'});
+var touchA = new brickpi.sensors.Sensor({port: brickpi.PORTS.S1, type: brickpi.SENSOR_TYPE.NXT.TOUCH, name: 'Touch Sensor on upper arm'});
 
 robot.addMotor(motorA).addMotor(motorB).addSensor(touchA).setup();
 
@@ -76,11 +76,11 @@ setTimeout(function() {
 
 ## API Documentation
 
-### Robot Object
+### Main Object
 
 #### Creation
 
-Use the BrickPi() object contructor.  An options object can be passed to the constructor.
+Use the BrickPi() object contructor.  An options object can be passed to the constructor, e.g. {serialPortAddress: "/dev/ttyAMA0", pollingInterval: 20}.  The pollingInterval is the wait time at the end of an updateValue cycle and the next.  default value is 50ms, i.e. about 20 cycles per seconds.  It can be set at 0, although that was not tested.  Works fine at 20 as well. 
 
 #### Adding Sensors and Motors
 
@@ -90,14 +90,17 @@ Use the addMotor() and addSensor() methods to add motors and sensors.
 
 To initialize the BirckPi object, use the setup() method.  This method will sestablish the serial port connection to the BrickPi board, set timeouts and configure the sensors.
 
-#### Running the robot
+#### Running the BrickPi
 
-Use the run() method the start your robot.  This launches a polling loop that updates motors speeds and encoders and fetches fresh sensor values.
+Use the run() method the start your robot.  This launches a polling loop that updates motors speeds and encoders and fetches fresh sensor values.  It should be called once the 'ready' event was received.
 
 #### Stopping the robot
 
 The stop() method will do that.  This will stop the communication polling to the Brickpi, ending all processes and exiting the nodescript.
 
+#### Events
+
+ready:  issued when the raspberry pi has established a serial connection to the Brickpi and proper timeout values where set.
 
 ### Motor Object
 
@@ -106,7 +109,7 @@ The stop() method will do that.  This will stop the communication polling to the
 Motor() is used to create the motor object.  Specify port aand optionally name:
 
 ```javascript
-var motorA = new brickpi.Motor({port: brickpi.MOTOR.A, name: 'motor A'});
+var motorA = new brickpi.motors.Motor({port: brickpi.PORTS.MA, name: 'motor A'});
 ``` 
 
 #### Methods
@@ -117,7 +120,27 @@ stop() stops the motor.
 
 stopIn(ticks, callback) will stop the motor in the given amount of ticks.  Ticks is an absolute value.  The callback will be called when the motor has reached the desired position and stopped.
 
-moveTo(ticks, callback) will get the motor position to the desired tick value (2 ticks equal 1 degree).  Once the desired position is reached, the callback is invoked.
+moveTo(ticks, callback) will get the motor position to the desired tick value (2 ticks equal 1 degree).  Once the desired position is reached, the callback is invoked.  An err parameter is passed to the callback if for some reason the desired endpoint was not reached.
+
+getPosition() returns current motor encoder position.
+
+resetPosition() will zero up the encoder position.   Calling getPosition() right after will return 0 as motor position.
+
+getActualSpeed() returns the actual motor speed in ticks/second.
+
+##### PID
+
+When stopIn or moveTo is used, a PID (proportional, Intergral and Derivative) control will be applied to the motor such that it will start to slow down as it approaches the desired position.
+
+#### Events
+stop: issued when the motor has stopped.
+
+```javascript
+motorA.on('stop', function() {
+    console.log('motorA has stopped');		  
+});
+
+```
 
 ### Sensor Object
 
@@ -126,74 +149,31 @@ moveTo(ticks, callback) will get the motor position to the desired tick value (2
 To create a sensor, use Sensor() providing a name, port and type.
 
 ```javascript
-var sensorA = new brickpi.Sensor({port: brickpi.SENSOR_PORT.ONE, type: bricpi.SENSOR_TYPE.TOUCH, name: 'motor A'});
+var sensorA = new brickpi.sensors.Sensor({port: brickpi.PORTS.S1, type: bricpi.SENSOR_TYPE.NXT.TOUCH, name: 'touch A'});
 ```
+Current SENSOR_TYPE supported are:
 
-TOUCH, ULTRASONIC_CONT, ULTRASONIC_SS, COLOR_FULL, DIMU
+NXT.TOUCH, 
+NXT.ULTRASONIC.CONT, 
+NXT.ULTRASONIC.SS, 
+NXT.COLOR.FULL, 
+NXT.COLOR.RED,
+NXT.COLOR.BLUE,
+NXT.COLOR.GREEN,
+NXT.COLOR.NONE,
+
+DEXTER.IMU.ACC
 
 #### Methods
 
-getName(), getValue() returns sensor name and sensor value respectively.  In the case of the DIMU sensor, a structure is returned:
+getValue() returns the sensor value.  In the case of the DIMU sensor, a structure is returned:
 {x: x, y: y, z: z}
 
-
 #### Note
-For now, the Dexter dIMU sensor will only return the acceleration only in an object ex: {x: 1.2, y:0.1 z:0.2}
+For now, the Dexter dIMU sensor will only return the acceleration only in an object ex: {x: 1.2, y:0.1 z:0.2}. And to keep things simple and efficient, one axis is updated per cycle. But considering the can be 50 cycles per seconds, a complete new vector is achieved in 60ms.
 
-
-## Events
-
-'change' event is fired when a sensor's value has changed.  
-
-'stop' when a motor has stopped.
-
-'move' when a motor has moved.
-
-'stopped' when a motor stopped moving because of some external obstruction.  i.e. the motor's speed is non-null, yet, it isn't turning/
- 
-
-## A Simple Project Example
-
-```javascript
-
-var brickpi = require('brickpi-raspberry');
-
-var robot = new brickpi.Robot();
-var motorA = new brickpi.Motor({port: brickpi.MOTOR.A, name: 'motorA'});
-var motorB = new brickpi.Motor({port: brickpi.MOTOR.B, name: 'motorB'});
-var motorC = new brickpi.Motor({port: brickpi.MOTOR.C, name: 'motorC'});
-var motorD = new brickpi.Motor({port: brickpi.MOTOR.D, name: 'Turret motor'});
-
-
-var touchA = new brickpi.Sensor({port: brickpi.SENSOR_PORT.ONE, type: brickpi.SENSOR_TYPE.TOUCH, nam\
-e: 'Touch Sensor on upper arm'});
-
-robot.setup().addMotor(motorA).addMotor(motorB).addMotor(motorC).addSensor(touchA).addMotor(motorD).run(function() {});
-
-motorA.start(-100).stopIn(14000, function() {
-    motorB.start(-100).stopIn(14000, function() {
-        motorC.start(200).stopIn(13000, function() {
-            motorD.start(100).stopIn(140, function() {
-                console.log('Finished sequence');
-                robot.stop(); // this kills communication to brickpi.                              
-            });
-        });
-    });
-});
-
-motorA.on('move', function() {
-});
-
-motorB.on('stop', function() {
-});
-
-```
 
 ## Limitations
 This module is improving quickly.  Stay posted.
 
-
-This is my first go at this module.  I have only implemented the LEGO NXT Touch, Color and Ultrasonic sensors for now.
-I just added the Dexter dIMU sensor, but only the acceleration bit.
-
-Stay posted, I'll be adding some more soon.
+A limited number of sensors are now supported.  If you require other ones, please let me know.
