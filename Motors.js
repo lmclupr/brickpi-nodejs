@@ -52,6 +52,16 @@ Motor.prototype.stopIn = function(amount, callback) {
     this._callback = callback;
     var startEncoderValue = this._encoderValue;
     this._endEncoderValue = this._encoderValue + this.speed*(parseInt(amount, 10))/(Math.abs(this.speed));
+
+	// setting min and max speed for PID
+	if (this.speed > 0) {
+ 	   this._maxSpeed = this.speed;
+    	   this._minSpeed = -1*this.speed;
+	} else {
+ 	   this._maxSpeed = -1*this.speed;
+    	   this._minSpeed = this.speed;
+	}
+
     return this;
 };
 
