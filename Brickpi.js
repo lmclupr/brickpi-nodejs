@@ -10,8 +10,8 @@ var SENSOR_TYPE = require('./Sensor_Type');
 
 exports.PORTS = PORTS;
 exports.SENSOR_TYPE = SENSOR_TYPE;
-exports.motors = motors;
-exports.sensors = sensors;
+exports.Motor = motors.Motor;
+exports.Sensor = sensors.Sensor;
 
 var INTERVAL_TIME = 50; // in milliseconds
 var SERIAL_PORT_ADDRESS = '/dev/ttyAMA0';

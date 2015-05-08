@@ -1,17 +1,14 @@
-var brickpi = require('brickpi-raspberry');
+var brickpi = require('./Brickpi');
 
 var robot = new brickpi.BrickPi();
-var motorA = new brickpi.Motor({port: brickpi.PORT.MA, name: 'motorA'});
-var motorB = new brickpi.Motor({port: brickpi.PORT.MB, name: 'motorB'});
-var motorC = new brickpi.Motor({port: brickpi.PORT.MC, name: 'motorC'});
-var motorD = new brickpi.Motor({port: brickpi.PORT.MD, name: 'Turret motor'});
-var touchA = new brickpi.Sensor({port: brickpi.PORT.ONE, type: brickpi.SENSOR_TYPE.NXT.TOUCH, name: 'Touch Sensor on upper arm'});
+var motorA = new brickpi.Motor({port: brickpi.PORTS.MA, name: 'motor A'});
+var motorB = new brickpi.Motor({port: brickpi.PORTS.MB, name: 'motor B'});
+var touchA = new brickpi.Sensor({port: brickpi.PORTS.S1, type: brickpi.SENSOR_TYPE.NXT.TOUCH, name: 'Touch A'});
 
-robot.addMotor(motorA).addMotor(motorB).addMotor(motorC).addSensor(touchA).addMotor(motorD).setup();
+robot.addMotor(motorA).addMotor(motorB).addSensor(touchA).setup();
 
 robot.on('ready', function() {
 	motorA.resetPosition();
-	motorB.resetPosition();
 	robot.run();
 
 	motorA.start(100).moveTo(5000, function(err) {
@@ -20,7 +17,7 @@ robot.on('ready', function() {
 });
 
 setTimeout(function() {
-	motorB.start(50);
+	motorB.start(150);
 }, 3000);
 
 setTimeout(function() {

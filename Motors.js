@@ -18,6 +18,7 @@ Motor = function(params) {
     this._callback = null;
     this._easein = params.easein || false;
     this._endEncoderValue = null;
+    this._minimumSpeed = 50;
 }
 exports.Motor = Motor;
 util.inherits(Motor, ee);
@@ -109,10 +110,11 @@ Motor.prototype._update = function(encoderValue) {
     if (this._endEncoderValue) {
 	var targetSpeed = this._PIDCalculation(this._endEncoderValue, this._encoderValue, timelapse, this._minSpeed, this._maxSpeed);
 	//console.log('targetSpeed:' + targetSpeed);
-	if (targetSpeed === 0) {
+	if (Math.abs(targetSpeed) < this._minimumSpeed) {
+		// motor power setting of less then 10 is just too small and assumed to be zero.
 		this.stop();
 	} else {
-		this.speed = targetSpeed;
+		this.speed = targetSpeed.toFixed(0);
 	}
 
 /*
