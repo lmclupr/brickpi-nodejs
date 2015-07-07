@@ -9,11 +9,11 @@ Sensor = function(params) {
 
     this.type = params.type;
     this.port = params.port;
-	this._value = {x: null, y: null, z: null};
-
-	// for DIUM sensors
-	this.setupDone = false;
-	this.currentAxis = 0x06; // x
+    this._value = {x: null, y: null, z: null};
+    
+    // for DIUM sensors
+    this.setupDone = false;
+    this.currentAxis = 0x06; // x
 }
 exports.Sensor = Sensor;
 util.inherits(Sensor, ee);

@@ -1,5 +1,3 @@
-//var LOG = require('winston')
-
 
 var BitArray = function(array) {
   this._array = Array.isArray(array) || Buffer.isBuffer(array) ? array : []
@@ -11,7 +9,6 @@ BitArray.prototype.addBits = function(byteOffset, bitOffset, bits, value) {
     var index = byteOffset + Math.floor((bitOffset + this._bitOffset + i) / 8)
 
     if(this._array.length < index) {
-      // expand array
       for(var n = this._array.length; n < index; n++) {
         this._array.push(0)
       }
@@ -32,9 +29,6 @@ BitArray.prototype.addBits = function(byteOffset, bitOffset, bits, value) {
 }
 
 BitArray.prototype.getBits = function(byteOffset, bitOffset, bits) {
- // LOG.debug("GetBits", byteOffset, bitOffset, bits)
- // LOG.debug("this._array", this._array)
-
   var result = 0
 
   for(var i = bits; i > 0; i--) {
@@ -43,13 +37,9 @@ BitArray.prototype.getBits = function(byteOffset, bitOffset, bits) {
 
     result *= 2
     result |= (this._array[index] >> position) & 0x01
-
-   // LOG.debug("Index", index, "=", this._array[index], ">>", position, "& 0x01 =", (this._array[index] >> position) & 0x01)
   }
 
   this._bitOffset += bits
-
-//  LOG.debug("result", result)
 
   return result
 }

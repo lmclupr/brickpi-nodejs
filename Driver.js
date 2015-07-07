@@ -174,6 +174,12 @@ Driver.prototype._SetupSensors = function(params, callback) {
 			data.addBits(0, 0, 4, 1); // I2C WRITE
 			data.addBits(0, 0, 4, 1); // I2C READ
 			data.addBits(0, 0, 8, 0x42 /*LEGO_US_I2C_DATA_REG*/);
+		} else if ((sensor.type === SENSOR_TYPE.I2C) || (sensor.type === SENSOR_TYPE.I2C_9V)) {
+			data.addBits(0, 0, 8, sensor.type);
+			data.addBits(0, 0, 8, 0 /*I2C_SPEED*/);
+			data.addBits(0, 0, 3, 0); // # devices - 1, there is never more than one device by I2C port.
+			data.addBits(0, 0, 7, 1 /* I2C_ADDR >> 1*/);
+			data.addBits(0, 0, 2, 0x02 /* sensor settings for IRLink PF function*/);
 		} else if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
 			data.addBits(0, 0, 8, SENSOR_TYPE.I2C);
 			data.addBits(0, 0, 8, 0 /*I2C_SPEED*/);
@@ -188,6 +194,9 @@ Driver.prototype._SetupSensors = function(params, callback) {
 	}
     }
     
+    var buf = new Buffer(data.getArray());
+    console.log('out going setup sensors' + buf.toJSON());
+
     this._currentChip = chipIndex;
     this._write(chipIndex, PROTOCOL.CONFIGURE_SENSORS, data.getArray());
 }
@@ -314,10 +323,20 @@ Driver.prototype._checkResponseIfFinished = function() {
 	}
 
 	for (var i = 0; i < 2; i++) {
-		// read sensor values.
-		var sensor = this._sensors[this._currentChip*2 + i - 2];
+	    // read sensor values.
+	    var sensor = this._sensors[this._currentChip*2 + i - 2];
 
 		if (sensor) {
+
+	    
+////
+	    var buf = new Buffer(incoming.getArray());
+		console.log(sensor.name);
+	    console.log('incoming: ' + buf.toJSON());
+/////
+
+
+
 			var value;
 			if (sensor.type === SENSOR_TYPE.NXT.TOUCH) {
 	 			value = incoming.getBits(1, 0, 1);
@@ -350,8 +369,12 @@ Driver.prototype._checkResponseIfFinished = function() {
 	 			value = incoming.getBits(1, 0, 8);
 			} else if (sensor.type === SENSOR_TYPE.NXT.COLOR.FULL) {
 				value = {blank: incoming.getBits(1, 0, 10), red: incoming.getBits(1, 0, 10), green: incoming.getBits(1, 0, 10), blue: incoming.getBits(1, 0, 10)};
+			} else if ((sensor.type === SENSOR_TYPE.EV3.COLOUR.M3) || 
+				   (sensor.type === SENSOR_TYPE.EV3.GYRO.M3) || 
+				   (sensor.type === SENSOR_TYPE.EV3.INFRARED.M2)) {
+                            value = incoming.getBits(1, 0, 32);
 			} else { // COLOR.RED, etc..
-				value = incoming.getBits(1, 0, 10);
+			    value = incoming.getBits(1, 0, 10);
 			}
 			sensor._update(value);
 		} else {
