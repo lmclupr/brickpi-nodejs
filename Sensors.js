@@ -9,23 +9,49 @@ Sensor = function(params) {
 
     this.type = params.type;
     this.port = params.port;
-    this._value = {x: null, y: null, z: null};
-    
-    // for DIUM sensors
-    this.setupDone = false;
-    this.currentAxis = 0x06; // x
+    this.value = {};
 }
-exports.Sensor = Sensor;
-util.inherits(Sensor, ee);
 
+var checkForChange = function(newValue,value) {
+	if(typeof newValue === 'object') {
+		for(var attr in newValue) {
+			if(newValue[attr] != value[attr]) {
+				return true;
+			}
+		}
+	}
+	else {
+		if(value != newValue) {
+			return true;
+		}
+	}
+}
 
-Sensor.prototype._update = function(value) {
-	this._value = value;
+Sensor.prototype._update = function(newValue) {
+	var self = this;
+
+	var oldValue = this.value;
+	
+	this.value = newValue;
+
+	process.nextTick(function() {
+		self.emit('updated',self.name,self.value);
+	});
+	
+	if(checkForChange(newValue,oldValue)) {
+		process.nextTick(function() {
+			self.emit('changed',self.name,self.value);
+		});
+		
+	}
 }
 
 Sensor.prototype.getValue = function() {
-	return this._value;
+	return this.value;
 }
+
+util.inherits(Sensor, ee);
+exports.Sensor = Sensor;
 
 
 

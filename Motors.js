@@ -19,8 +19,6 @@ Motor = function(params) {
     this._endEncoderValue = null;
     this._tolerance = 10;
 }
-exports.Motor = Motor;
-util.inherits(Motor, ee);
 
 Motor.prototype.getPosition = function() {
     return (this._encoderValue - this._offset);
@@ -37,6 +35,7 @@ Motor.prototype.getActualSpeed = function() {
 
 Motor.prototype.start = function(speed) {
     this.speed = parseInt(speed, 10);
+    this.emit('start', this);
     return this;
 };
 
@@ -44,6 +43,7 @@ Motor.prototype.stop = function(err) {
     this._endEncoderValue = null;
     this.speed = 0;
     if (this._callback) this._callback(err);
+    
     this.emit('stop', this);
     return this;
 };
@@ -96,23 +96,23 @@ Motor.prototype._update = function(encoderValue) {
     this._before = now;
     
     if (this._previousEncoderValue !== null) {
-	this._actualSpeed = (this._encoderValue - this._previousEncoderValue)/timelapse*1000;
+    	this._actualSpeed = (this._encoderValue - this._previousEncoderValue)/timelapse*1000;
     }
+    
     this._previousEncoderValue = this._encoderValue;
-    /////////
     
     if (this._actualSpeed !== 0) {
-	this.emit('move');
+    	this.emit('move',this);
     }
     
     if (this._endEncoderValue) {
-	var targetSpeed = this._PIDCalculation(this._endEncoderValue, this._encoderValue, timelapse, this._minSpeed, this._maxSpeed);
-	
-	if (((Math.abs(this._endEncoderValue - this._encoderValue) < this._tolerance) || (Math.abs(targetSpeed) < 20))&& (Math.abs(this._actualSpeed) === 0)) {
-	    this.stop();
-	} else {
-	    this.speed = targetSpeed.toFixed(0);
-	}
+		var targetSpeed = this._PIDCalculation(this._endEncoderValue, this._encoderValue, timelapse, this._minSpeed, this._maxSpeed);
+		
+		if (((Math.abs(this._endEncoderValue - this._encoderValue) < this._tolerance) || (Math.abs(targetSpeed) < 20)) && (Math.abs(this._actualSpeed) === 0)) {
+		    this.stop();
+		} else {
+		    this.speed = targetSpeed.toFixed(0);
+		}
     }
 };
 
@@ -131,7 +131,7 @@ Motor.prototype._PIDCalculation = function(setPoint, currentPoint, dt, min, max)
     error = setPoint - currentPoint;
     
     if (Math.abs(error) > epsilon) {
-	this._integral = this._integral + error*dt;
+    	this._integral = this._integral + error*dt;
     } 
     
     derivative = (error - this._pre_error)/dt;
@@ -139,12 +139,17 @@ Motor.prototype._PIDCalculation = function(setPoint, currentPoint, dt, min, max)
     
     //Saturation Filter
     if (output > max) {
-	output = max;
+    	output = max;
     } else if (output < min) {
-	output = min;
+    	output = min;
     }
     
     //Update error
     this._pre_error = error;
+    
     return output;
 }
+
+util.inherits(Motor, ee);
+exports.Motor = Motor;
+

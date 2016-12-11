@@ -1,4 +1,4 @@
-var SerialPort = require('serialport').SerialPort;
+var SerialPort = require('serialport');
 var async = require('async');
 var BitArray = require('./BitArray');
 var PROTOCOL = require('./Protocol');
@@ -24,7 +24,6 @@ var Driver = function(serialPortAddress) {
     this._sensors = null;
     this._serialPortAddress = serialPortAddress;
 };
-exports.Driver = Driver;
 
 Driver.prototype.open = function(callback) {    
     this._serialPort = new SerialPort(this._serialPortAddress, {baudrate: 500000});
@@ -115,25 +114,27 @@ Driver.prototype._UpdateValues = function(params, callback) {
     }
     
     for (var i=(chipIndex*2 - 2); i < (chipIndex*2); i++) {
-	var sensor = sensors[i];
+	    	
+		var sensor = sensors[i];
+		
+		if (sensor != null) {
+		    // TOUCH, and other NON I2C sensors, nothing to do.
 	
-	if (sensor != null) {
-	    // TOUCH, and other NON I2C sensors, nothing to do.
-
-	    if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
-		if (!sensor.setupDone) {
-			sensor.setupDone = true;
-			data.addBits(0, 0, 4, 2); // I2C WRITE
-			data.addBits(0, 0, 4, 0); // I2C READ
-			data.addBits(0, 0, 8, 0x16 /**/);
-			data.addBits(0, 0, 8, 0x05 /*DIMU_ACC_RANGE_2G 0x04 | DIMU_ACC_MODE_MEAS 0x01 */); // I2Cout
+		    if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
+				if (!sensor.setupDone) {
+					sensor.setupDone = true;
+					data.addBits(0, 0, 4, 2); // I2C WRITE
+					data.addBits(0, 0, 4, 0); // I2C READ
+					data.addBits(0, 0, 8, 0x16 /**/);
+					data.addBits(0, 0, 8, 0x05 /*DIMU_ACC_RANGE_2G 0x04 | DIMU_ACC_MODE_MEAS 0x01 */); // I2Cout
+				}
+				data.addBits(0, 0, 4, 1); // Write
+				data.addBits(0, 0, 4, 1); // Read
+				data.addBits(0, 0, 8, sensor.currentAxis); // I2Cout  0x06 x 0x07 y 0x08 z
+		    }
+		    
+//		    data.dumpToConsole();
 		}
-		data.addBits(0, 0, 4, 1); // Write
-		data.addBits(0, 0, 4, 1); // Read
-		data.addBits(0, 0, 8, sensor.currentAxis); // I2Cout  0x06 x 0x07 y 0x08 z
-	    }
-//	    console.log('update value request: ' + data.getArray());
-	}
     }
     
 
@@ -142,7 +143,6 @@ Driver.prototype._UpdateValues = function(params, callback) {
 }
 
 Driver.prototype.SetupSensors = function(sensors, callback) {
-//	console.log('setting up sensors');
     async.eachSeries([{chipIndex: 1, sensors: sensors}, {chipIndex: 2, sensors: sensors}], this._SetupSensors.bind(this), function(err) {
 	callback(err);
     });
@@ -152,8 +152,8 @@ Driver.prototype._SetupSensors = function(params, callback) {
     this._asyncCallback = callback;
     
     this._asyncTimeout = setTimeout(function() {
-	console.log('rx Timeout');
-	callback('timed out');
+		console.log('rx Timeout');
+		callback('timed out');
     }, PROTOCOL_TIMEOUT);
     
     this._sensors = params.sensors;
@@ -161,46 +161,57 @@ Driver.prototype._SetupSensors = function(params, callback) {
     
     var data = new BitArray();
 
+    // Push sensor type(s) onto the stream
+    
     for (var i=(chipIndex*2 - 2); i<(chipIndex*2); i++) {
-	var sensor = this._sensors[i];
-
-	if (sensor != null) {
-		if (sensor.type === SENSOR_TYPE.NXT.ULTRASONIC.CONT) {
-			data.addBits(0, 0, 8, SENSOR_TYPE.I2C);
-			data.addBits(0, 0, 8, 10 /*US_I2C_SPEED*/);
-			data.addBits(0, 0, 3, 0); // # devices - 1
-			data.addBits(0, 0, 7, 1/*LEGO_US_I2C_ADDR >> 1*/);
-			data.addBits(0, 0, 2, 0x03 /* sensor settings (BIT_I2C_MID | BIT_I2C_SAME)*/);
-			data.addBits(0, 0, 4, 1); // I2C WRITE
-			data.addBits(0, 0, 4, 1); // I2C READ
-			data.addBits(0, 0, 8, 0x42 /*LEGO_US_I2C_DATA_REG*/);
-		} else if ((sensor.type === SENSOR_TYPE.I2C) || (sensor.type === SENSOR_TYPE.I2C_9V)) {
-			data.addBits(0, 0, 8, sensor.type);
-			data.addBits(0, 0, 8, 0 /*I2C_SPEED*/);
-			data.addBits(0, 0, 3, 0); // # devices - 1, there is never more than one device by I2C port.
-			data.addBits(0, 0, 7, 1 /* I2C_ADDR >> 1*/);
-			data.addBits(0, 0, 2, 0x02 /* sensor settings for IRLink PF function*/);
-		} else if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
-			data.addBits(0, 0, 8, SENSOR_TYPE.I2C);
-			data.addBits(0, 0, 8, 0 /*I2C_SPEED*/);
-			data.addBits(0, 0, 3, 0); // # devices - 1
-			data.addBits(0, 0, 7, 0x3A >> 1 /* DIMU_ACC_I2C_ADDR >> 1*/);
-			data.addBits(0, 0, 2, 0x00 /* sensor settings */);
+		var sensor = this._sensors[i];
+	
+		if (sensor != null) {
+			if (sensor.type === SENSOR_TYPE.NXT.ULTRASONIC.CONT) {
+				data.addBits(0, 0, 8, SENSOR_TYPE.I2C);
+			} else if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
+				data.addBits(0, 0, 8, SENSOR_TYPE.I2C);
+			} else {
+				data.addBits(0, 0, 8, sensor.type);
+			}
 		} else {
-			data.addBits(0, 0, 8, sensor.type);
+			data.addBits(0, 0, 8, 0);
 		}
-	} else {
-		data.addBits(0, 0, 8, 0);
-	}
     }
     
-    var buf = new Buffer(data.getArray());
-    console.log('out going setup sensors' + buf.toJSON());
+    // Push sensor configuration(s) onto the stream
+    
+    for (var i=(chipIndex*2 - 2); i<(chipIndex*2); i++) {
+		var sensor = this._sensors[i];
+	
+		if (sensor != null) {
+			if (sensor.type === SENSOR_TYPE.NXT.ULTRASONIC.CONT) {
+				data.addBits(0, 0, 8, 10 /*US_I2C_SPEED*/);
+				data.addBits(0, 0, 3, 0); // # devices - 1
+				data.addBits(0, 0, 7, 1/*LEGO_US_I2C_ADDR >> 1*/);
+				data.addBits(0, 0, 2, 0x03 /* sensor settings (BIT_I2C_MID | BIT_I2C_SAME)*/);
+				data.addBits(0, 0, 4, 1); // I2C WRITE
+				data.addBits(0, 0, 4, 1); // I2C READ
+				data.addBits(0, 0, 8, 0x42 /*LEGO_US_I2C_DATA_REG*/);
+			} else if ((sensor.type === SENSOR_TYPE.I2C) || (sensor.type === SENSOR_TYPE.I2C_9V)) {
+				data.addBits(3, 0, 8, 0 /*I2C_SPEED*/);
+				data.addBits(3, 0, 3, 0); // # devices - 1, there is never more than one device by I2C port.
+				data.addBits(3, 0, 7, 1 /* I2C_ADDR >> 1*/);
+				data.addBits(3, 0, 2, 0x02 /* sensor settings for IRLink PF function*/);
+			} else if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
+				data.addBits(3, 0, 8, 0 /*I2C_SPEED*/);
+				data.addBits(3, 0, 3, 0); // # devices - 1
+				data.addBits(3, 0, 7, 0x3A >> 1 /* DIMU_ACC_I2C_ADDR >> 1*/);
+				data.addBits(3, 0, 2, 0x00 /* sensor settings */);
+			}
+		}
+    }
+    
+//    data.dumpToConsole();
 
     this._currentChip = chipIndex;
     this._write(chipIndex, PROTOCOL.CONFIGURE_SENSORS, data.getArray());
 }
-
 
 Driver.prototype._write = function(chipIndex, command, data) { 
     var packet = new Buffer(data.length + 4);
@@ -279,7 +290,7 @@ Driver.prototype._recordExpectedReadLength = function(byte) {
 
 Driver.prototype._checkResponseIfFinished = function() {
     if(this._readBufferOffset != this._readLength) {
-	return;
+    	return;
     }
     
     // done reading response
@@ -288,107 +299,123 @@ Driver.prototype._checkResponseIfFinished = function() {
     var error = undefined;
     
     if((this._readChecksumData & 0xFF) != this._readChecksum) {
-	if (this._asyncCallback) this._asyncCallback('checksum failed');
+    	if (this._asyncCallback) this._asyncCallback('checksum failed');
+    	console.log("checksum failed...");
     }
 
-    // this is where the reponse from the Brickpi is handled.
+    // This is where the response from the Brickpi is handled.
+    
+    // Handle communication timeout
+    
     if (this._readBuffer[0] === PROTOCOL.SET_COMMUNICATION_TIMEOUT) {
-	if (this._asyncTimeout) clearTimeout(this._asyncTimeout);
-	this._asyncCallback(null);
+    	console.log("communication timeout...");
+		if (this._asyncTimeout) clearTimeout(this._asyncTimeout);
+			this._asyncCallback(null);
     }
 
+    // Handle configuration request
+    
+    if (this._readBuffer[0] === PROTOCOL.CONFIGURE_SENSORS) {
+		if (this._asyncTimeout) 
+			clearTimeout(this._asyncTimeout);
+		this._asyncCallback(null);
+    }
+
+    // Handle sensor read
+    
     if (this._readBuffer[0] === PROTOCOL.READ_SENSOR_VALUES) {
-	var incoming = new BitArray(this._readBuffer);
+		var incoming = new BitArray(this._readBuffer);
 	
-	var encoderLengths = [
-	    incoming.getBits(1, 0, 5),
-	    incoming.getBits(1, 0, 5),
-	]
+		//	incoming.dumpToConsole();
+
+		// Process encoders
+		
+		var encoderLengths = [
+		    incoming.getBits(1, 0, 5),
+		    incoming.getBits(1, 0, 5),
+		]
+		
+		for(var i = 0; i < 2; i++) {
+		    var value = incoming.getBits(1, 0, encoderLengths[i]);
+		    var position = value;
+		    position = (position/2).toFixed(0);
 	
-	for(var i = 0; i < 2; i++) {
-	    var value = incoming.getBits(1, 0, encoderLengths[i]);
-	    var position = value;
-	    position = (position/2).toFixed(0);
-
-	    if(value & 0x01) {
-    	        position *= -1;
-  	    }
-
-            if (this._motors) {
-		if (this._motors[this._currentChip*2 + i - 2]) {
-			// motor is defined. update position
-			this._motors[this._currentChip*2 + i - 2]._update(position);
+		    if(value & 0x01) {
+	    	        position *= -1;
+	  	    }
+	
+	        if (this._motors) {
+				if (this._motors[this._currentChip*2 + i - 2]) {
+					// motor is defined. update position
+					this._motors[this._currentChip*2 + i - 2]._update(position);
+				}
+	        }
 		}
-            }
-	}
 
-	for (var i = 0; i < 2; i++) {
-	    // read sensor values.
-	    var sensor = this._sensors[this._currentChip*2 + i - 2];
-
-		if (sensor) {
-
-	    
-////
-	    var buf = new Buffer(incoming.getArray());
-		console.log(sensor.name);
-	    console.log('incoming: ' + buf.toJSON());
-/////
-
-
-
-			var value;
-			if (sensor.type === SENSOR_TYPE.NXT.TOUCH) {
-	 			value = incoming.getBits(1, 0, 1);
-			} else if (sensor.type === SENSOR_TYPE.NXT.ULTRASONIC.CONT) {
-				var port = incoming.getBits(1, 0, 1);
-				value = incoming.getBits(1, 0, 8);
-			} else if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
-				var port = incoming.getBits(1, 0, 1);
-				value = incoming.getBits(1, 0, 8);
-
-				value = (value > 128) ? ((value-256)/64) : (value/64);
+		// Process sensors
+		
+		for (var i = 0; i < 2; i++) {
+		    // read sensor values.
+			
+			var sensorIndex = this._currentChip*2 + i - 2;
+		    var sensor = this._sensors[sensorIndex];
+	
+			if (sensor) {
+				var value;
 				
-				var newValue = sensor.getValue();
-				if (sensor.currentAxis === 0x6) {
-					sensor.currentAxis = 0x07; // set it up so that next cycle, the y is read.
-					newValue.x = value;
-					value = newValue;
-				} else if (sensor.currentAxis === 0x7) {
-					sensor.currentAxis = 0x08; // set it up so that next cycle, the z is read.
-					newValue.y = value;
-					value = newValue;
-				} else {
-					sensor.currentAxis = 0x06; // set it up so that next cycle, the x is read.
-					newValue.z = value;
-					value = newValue;
+				if (sensor.type === SENSOR_TYPE.NXT.TOUCH) {
+		 			value = incoming.getBits(1, 0, 1);
+				} else if (sensor.type === SENSOR_TYPE.NXT.ULTRASONIC.CONT) {
+					var port = incoming.getBits(1, 0, 1);
+					value = incoming.getBits(1, 0, 8);
+				} else if (sensor.type === SENSOR_TYPE.DEXTER.IMU.ACC) {
+					var port = incoming.getBits(1, 0, 1);
+					value = incoming.getBits(1, 0, 8);
+	
+					value = (value > 128) ? ((value-256)/64) : (value/64);
+					
+					var newValue = sensor.getValue();
+					
+					if (sensor.currentAxis === 0x6) {
+						sensor.currentAxis = 0x07; // set it up so that next cycle, the y is read.
+						newValue.x = value;
+						value = newValue;
+					} else if (sensor.currentAxis === 0x7) {
+						sensor.currentAxis = 0x08; // set it up so that next cycle, the z is read.
+						newValue.y = value;
+						value = newValue;
+					} else {
+						sensor.currentAxis = 0x06; // set it up so that next cycle, the x is read.
+						newValue.z = value;
+						value = newValue;
+					}
+				} else if (sensor.type === SENSOR_TYPE.NXT.ULTRASONIC.SS) {
+					// i don't know how _SS works.  Need to implement _CONT
+		 			value = incoming.getBits(1, 0, 8);
+				} else if (sensor.type === SENSOR_TYPE.NXT.COLOR.FULL) {
+					var raw = incoming.getBits(1, 0, 3);
+					var blank = incoming.getBits(1, 0, 10);
+					var red = incoming.getBits(1, 0, 10);
+					var green = incoming.getBits(1, 0, 10);
+					var blue = incoming.getBits(1, 0, 10);
+
+					value = { raw : raw, blank : blank, red : red, green : green, blue : blue};
+				} else if ((sensor.type === SENSOR_TYPE.EV3.COLOUR.M3) || 
+					   (sensor.type === SENSOR_TYPE.EV3.GYRO.M3) || 
+					   (sensor.type === SENSOR_TYPE.EV3.INFRARED.M2)) {
+	                            value = incoming.getBits(1, 0, 32);
+				} else { // COLOR.RED, etc..
+				    value = incoming.getBits(1, 0, 10);
 				}
 
-			} else if (sensor.type === SENSOR_TYPE.NXT.ULTRASONIC.SS) {
-				// i don't know how _SS works.  Need to implement _CONT
-	 			value = incoming.getBits(1, 0, 8);
-			} else if (sensor.type === SENSOR_TYPE.NXT.COLOR.FULL) {
-				value = {blank: incoming.getBits(1, 0, 10), red: incoming.getBits(1, 0, 10), green: incoming.getBits(1, 0, 10), blue: incoming.getBits(1, 0, 10)};
-			} else if ((sensor.type === SENSOR_TYPE.EV3.COLOUR.M3) || 
-				   (sensor.type === SENSOR_TYPE.EV3.GYRO.M3) || 
-				   (sensor.type === SENSOR_TYPE.EV3.INFRARED.M2)) {
-                            value = incoming.getBits(1, 0, 32);
-			} else { // COLOR.RED, etc..
-			    value = incoming.getBits(1, 0, 10);
+				sensor._update(value);
+			} else {
+				incoming.getBits(1, 0, 10);
 			}
-			sensor._update(value);
-		} else {
-			incoming.getBits(1, 0, 10);
 		}
-	}
 
-	if (this._asyncTimeout) clearTimeout(this._asyncTimeout);
-	this._asyncCallback(null);
-    }
-
-    if (this._readBuffer[0] === PROTOCOL.CONFIGURE_SENSORS) {
-	if (this._asyncTimeout) clearTimeout(this._asyncTimeout);
-	this._asyncCallback(null);
+		if (this._asyncTimeout) clearTimeout(this._asyncTimeout);
+			this._asyncCallback(null);
     }
 
     this._resetReadFields();
@@ -407,4 +434,4 @@ Driver.prototype.close = function(callback) {
     });
 }
 
-
+exports.Driver = Driver;
