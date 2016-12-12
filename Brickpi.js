@@ -22,11 +22,11 @@ var BrickPi = function(params) {
 
     if (params) {
 	    if (params.pollingInterval) {
-		INTERVAL_TIME = params.pollingInterval;
+	    	INTERVAL_TIME = params.pollingInterval;
     	}
 
 	    if (params.serialPortAddress) {
-		SERIAL_PORT_ADDRESS = params.serialPortAddress;
+	    	SERIAL_PORT_ADDRESS = params.serialPortAddress;
     	}
     }
 
@@ -37,8 +37,6 @@ var BrickPi = function(params) {
     
     this._driver = new driver.Driver(SERIAL_PORT_ADDRESS);
 };
-exports.BrickPi = BrickPi;
-util.inherits(BrickPi, ee);
 
 // setup:  open serial port, setTimeout, setupSensors and run an initial single update values.
 BrickPi.prototype.setup = function() {
@@ -48,7 +46,12 @@ BrickPi.prototype.setup = function() {
 		if (err) {throw new Error(err);}
 		this._driver.UpdateValues(this._motors, this._sensors, function(err) {
 			if (err) {throw new Error(err)}
-			this.emit('ready');
+
+			var self = this;
+			
+			process.nextTick(function() {
+				self.emit('ready');
+			});
 		}.bind(this));
 	}.bind(this));
     }.bind(this));
@@ -65,19 +68,27 @@ BrickPi.prototype.run = function() {
 
 BrickPi.prototype._run = function() {
     this._driver.UpdateValues(this._motors, this._sensors, function(err) {
-	if (err) console.log(err);
-	this.emit('tick');
+		var self = this;
+		
+		if (err) console.log(err);
 
-	if (this._running) {
-		setTimeout(function() {
-			this._run();
-		}.bind(this), INTERVAL_TIME);
-	} else {
-	    this._driver.close(function() {
-		console.log('brickpi stopped');
-	    });
-	}
-    }.bind(this));
+		process.nextTick(function() {
+			self.emit('tick');
+		});
+	
+		if (this._running) {
+			setTimeout(function() {
+				this._run();
+			}.bind(this), INTERVAL_TIME);
+		} else {
+		    this._driver.close(function() {
+				
+				process.nextTick(function() {
+					self.emit('stopped');
+				});
+		    });
+		}
+	}.bind(this));
 }
 
 BrickPi.prototype.addMotor = function(motor) {
@@ -91,3 +102,7 @@ BrickPi.prototype.addSensor = function(sensor) {
 	this._sensors[i] = sensor;
 	return this;
 }
+
+util.inherits(BrickPi, ee);
+exports.BrickPi = BrickPi;
+
